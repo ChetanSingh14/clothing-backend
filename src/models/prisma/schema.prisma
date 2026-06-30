@@ -16,6 +16,8 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+  orders    Order[]
+  wishlists Wishlist[]
 }
 
 model Product {
@@ -31,6 +33,7 @@ model Product {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   reviews      Review[]
+  wishlists    Wishlist[]
 }
 
 model Review {
@@ -42,4 +45,24 @@ model Review {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount Float
+  items       Json     // Array of bought items with quantity, color, size, title, price
+  createdAt   DateTime @default(now())
+}
+
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([userId, productId])
+}
+
 

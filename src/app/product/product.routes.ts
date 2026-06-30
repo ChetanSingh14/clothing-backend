@@ -7,6 +7,9 @@ import {
   updateProduct,
   deleteProduct,
   getAdminStats,
+  getAdminUsers,
+  getAdminReviews,
+  deleteReview,
 } from "./product.controller";
 import { authenticateToken, authorizeAdmin } from "../../common/middlewares/auth.middleware";
 import fs from "fs";
@@ -25,6 +28,9 @@ router.post("/admin", authenticateToken(), authorizeAdmin, createProduct);
 router.put("/admin/:id", authenticateToken(), authorizeAdmin, updateProduct);
 router.delete("/admin/:id", authenticateToken(), authorizeAdmin, deleteProduct);
 router.get("/admin/dashboard", authenticateToken(), authorizeAdmin, getAdminStats);
+router.get("/admin/users", authenticateToken(), authorizeAdmin, getAdminUsers);
+router.get("/admin/reviews", authenticateToken(), authorizeAdmin, getAdminReviews);
+router.delete("/admin/reviews/:id", authenticateToken(), authorizeAdmin, deleteReview);
 
 // Custom local base64 upload route for admin product uploads
 router.post("/admin/upload", authenticateToken(), authorizeAdmin, (req, res, next) => {

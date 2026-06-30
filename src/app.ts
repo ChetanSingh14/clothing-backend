@@ -7,6 +7,8 @@ import globalErrorHandler from "./common/middlewares/error.middleware";
 import { authRoutes } from "./app/auth/auth.routes";
 import { userRoutes } from "./app/user/user.routes";
 import { productRoutes } from "./app/product/product.routes";
+import { orderRoutes } from "./app/order/order.routes";
+import { wishlistRoutes } from "./app/wishlist/wishlist.routes";
 
 class ExpressApp {
   public app: Application;
@@ -63,6 +65,12 @@ class ExpressApp {
 
     // Products catalog & Admin routes
     this.app.use("/api/v1/products", productRoutes);
+
+    // Orders checkout routes
+    this.app.use("/api/v1/orders", orderRoutes);
+
+    // Wishlist toggles routes
+    this.app.use("/api/v1/wishlist", wishlistRoutes);
   }
 
   private setupErrorHandling(): void {

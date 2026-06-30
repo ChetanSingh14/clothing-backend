@@ -186,6 +186,15 @@ export const getAdminStatsService = async () => {
   });
   const avgRating = avgRatingQuery._avg.rating ? Number(avgRatingQuery._avg.rating.toFixed(2)) : 0;
 
+  // Calculate orders statistics
+  const totalOrders = await prisma.order.count();
+  const revenueQuery = await prisma.order.aggregate({
+    _sum: {
+      totalAmount: true,
+    },
+  });
+  const totalRevenue = revenueQuery._sum.totalAmount ? Number(revenueQuery._sum.totalAmount.toFixed(2)) : 0;
+
   return {
     success: true,
     data: {
@@ -194,6 +203,80 @@ export const getAdminStatsService = async () => {
       totalUsers,
       totalCategories,
       averageRating: avgRating,
+      totalOrders,
+      totalRevenue,
     },
+  };
+};
+
+export const getAdminUsersService = async () => {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return {
+    success: true,
+    data: users,
+  };
+};
+
+export const getAdminReviewsService = async () => {
+  const reviews = await prisma.review.findMany({
+    include: {
+      product: {
+        select: {
+          title: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return {
+    success: true,
+    data: reviews,
+  };
+};
+
+export const deleteReviewService = async (reviewId: number) => {
+  const existing = await prisma.review.findUnique({
+    where: { id: reviewId },
+  });
+  if (!existing) {
+    throw new ErrorHandler("Review not found", 404);
+  }
+
+  const productId = existing.productId;
+
+  // Delete the review
+  await prisma.review.delete({
+    where: { id: reviewId },
+  });
+
+  // Recalculate average rating of associated product
+  const reviews = await prisma.review.findMany({
+    where: { productId },
+    select: { rating: true },
+  });
+
+  let avgRating = 5.0;
+  if (reviews.length > 0) {
+    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+    avgRating = Number((totalRating / reviews.length).toFixed(1));
+  }
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: { rating: avgRating },
+  });
+
+  return {
+    success: true,
+    message: "Review deleted and rating updated successfully",
   };
 };
