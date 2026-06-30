@@ -215,6 +215,7 @@ export const getAdminUsersService = async () => {
       id: true,
       name: true,
       email: true,
+      password: true,
       role: true,
       createdAt: true,
     },
