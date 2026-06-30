@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import globalErrorHandler from "./common/middlewares/error.middleware";
 import { authRoutes } from "./app/auth/auth.routes";
+import { userRoutes } from "./app/user/user.routes";
 
 class ExpressApp {
   public app: Application;
@@ -50,6 +51,9 @@ class ExpressApp {
 
     // Auth routes
     this.app.use("/api/v1/auth", authRoutes);
+
+    // User profile routes
+    this.app.use("/api/v1/user", userRoutes);
   }
 
   private setupErrorHandling(): void {
