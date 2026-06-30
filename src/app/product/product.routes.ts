@@ -50,8 +50,9 @@ router.post("/admin/upload", authenticateToken(), authorizeAdmin, (req, res, nex
     const buffer = Buffer.from(base64Data, "base64");
     
     // Check extension
-    const ext = fileType.split("/")[1] || "png";
-    const fileName = `img_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
+    let ext = fileType.split("/")[1] || "png";
+    if (ext.includes("gltf-binary") || ext.includes("glb")) ext = "glb";
+    const fileName = `file_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
     
     const uploadDir = path.join(__dirname, "../../../public/uploads");
     if (!fs.existsSync(uploadDir)) {
