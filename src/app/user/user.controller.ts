@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../common/middlewares/auth.middleware";
-import { getUserProfileService, updateProfileService } from "./user.service";
+import { getUserProfileService, updateProfileService, adminUpdateUserService } from "./user.service";
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
 
@@ -33,6 +33,19 @@ export const updateProfile = catchAsyncError(
     }
 
     const result = await updateProfileService(userId, name);
+    res.status(200).json(result);
+  }
+);
+
+export const adminUpdateUser = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new ErrorHandler("Invalid user ID", 400);
+    }
+
+    logger.info(`💼 [Admin] Updating profile/password for user ID ${id} by admin ${req.user?.email}`);
+    const result = await adminUpdateUserService(id, req.body);
     res.status(200).json(result);
   }
 );

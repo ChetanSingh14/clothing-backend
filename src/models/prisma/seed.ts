@@ -7,15 +7,26 @@ async function main() {
   console.log("🌱 Start seeding...");
 
   // 1. Clean existing data
+  await prisma.settings.deleteMany();
   await prisma.review.deleteMany();
   await prisma.product.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Create Admin User
+  // 2. Create Default Brand Settings
+  const brandSettings = await prisma.settings.create({
+    data: {
+      id: 1,
+      companyName: "MDFK CLOTHING CO.",
+      logoUrl: "/logo.jpg",
+    },
+  });
+  console.log(`✅ Default Brand Settings seeded: ${brandSettings.companyName}`);
+
+  // 3. Create Admin User
   const adminPasswordHash = await bcrypt.hash("Password123", 10);
   const admin = await prisma.user.create({
     data: {
-      name: "Flowbox Admin",
+      name: "MDFK Admin",
       email: "admin@flowbox.com",
       password: adminPasswordHash,
       role: "ADMIN",
@@ -23,7 +34,7 @@ async function main() {
   });
   console.log(`✅ Admin user created: ${admin.email}`);
 
-  // 3. Create Regular User
+  // 4. Create Regular User
   const userPasswordHash = await bcrypt.hash("Password123", 10);
   const regularUser = await prisma.user.create({
     data: {
@@ -35,101 +46,95 @@ async function main() {
   });
   console.log(`✅ Regular user created: ${regularUser.email}`);
 
-  // 4. Seed Products
+  // 5. Seed Graphic T-Shirts Products
   const productsData = [
     {
-      title: "Trendy Brown Coat",
-      description: "A signature double-breasted trench coat tailored from pure virgin wool, complete with an elegant tie belt, deep slant pockets, and subtle buttoned cuffs. Perfect for layering over winter outfits.",
-      price: 75.0,
-      category: "Coats",
+      title: "Cyberpunk Printed Tee",
+      description: "Oversized fit streetwear graphic tee screen-printed on heavy 260GSM pre-shrunk carded cotton. Features double-needle tailored hems and a ribbed drop-shoulder collar frame. Dynamic cyber-art neon chest graphics.",
+      price: 35.0,
+      category: "T-Shirts",
       images: [
-        "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600&auto=format&fit=crop"
+        "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600&auto=format&fit=crop"
       ],
-      colors: ["#8B5A2B", "#4A3B32", "#A0522D"],
+      colors: ["#111111", "#FFFFFF", "#4B2840"],
       sizes: ["S", "M", "L", "XL", "XXL"],
-      rating: 4.8,
-      reviews: {
-        create: [
-          {
-            rating: 5,
-            comment: "Absolutely love it! The wool feels extremely high quality and it fits like a glove.",
-            userName: "Sarah Jenkins"
-          },
-          {
-            rating: 4,
-            comment: "Very cozy coat, keep in mind it runs slightly large. I had to size down.",
-            userName: "Emily Watson"
-          }
-        ]
-      }
-    },
-    {
-      title: "Minimal Purple Hoodie",
-      description: "Premium oversized fleece hoodie with structured shoulder drops and double-stitched hood overlays. Features deep front cargo pockets and styled drawstrings.",
-      price: 120.0,
-      category: "Hoodies",
-      images: [
-        "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=600&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=600&auto=format&fit=crop"
-      ],
-      colors: ["#7D5A8C", "#4B2840", "#C2B29B"],
-      sizes: ["S", "M", "L"],
       rating: 4.9,
       reviews: {
         create: [
           {
             rating: 5,
-            comment: "This is the best hoodie I have ever owned. Color is exactly like the rack photo!",
+            comment: "Best oversized tee I own. Heavyweight fabric holds its boxy structure perfectly.",
             userName: "Mark Peterson"
+          },
+          {
+            rating: 4,
+            comment: "Printed graphics are high res. Survived three washes without crack lines.",
+            userName: "Sarah Jenkins"
           }
         ]
       }
     },
     {
-      title: "Urban Knit Sneakers",
-      description: "Part of our New Spring Collection, these active sneakers feature lightweight mesh panels, adaptive arch-support footbeds, and custom-molded high-traction soles.",
-      price: 95.0,
-      category: "Sneakers",
+      title: "Acid Wash Street Tee",
+      description: "Vintage wash effect cotton jersey printed tee with custom spray-paint style typography graphic across the shoulders. Heavy cotton texture with premium distressed detailing.",
+      price: 39.0,
+      category: "T-Shirts",
       images: [
-        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=600&auto=format&fit=crop"
+        "https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=600&auto=format&fit=crop"
       ],
-      colors: ["#FFFFFF", "#E5DCC5", "#111111"],
-      sizes: ["7", "8", "9", "10", "11"],
-      rating: 4.7,
+      colors: ["#4A3B32", "#8B5A2B"],
+      sizes: ["S", "M", "L", "XL"],
+      rating: 4.8,
       reviews: {
         create: [
           {
             rating: 5,
-            comment: "Walked 10 miles in these the first day, zero issues. Super responsive foam!",
-            userName: "David Cole"
-          },
-          {
-            rating: 4,
-            comment: "Looks great with beige utility pants. Highly recommend.",
+            comment: "Dope vintage wash finish. Fits exactly how a streetwear tee should.",
             userName: "Lucas Bennett"
           }
         ]
       }
     },
     {
-      title: "Premium Beige Sweater",
-      description: "Fine-knit crewneck sweater knit from a luxury blend of cashmere and organic cotton. Designed with flatlock seams and rib-knit cuffs for clean structures.",
-      price: 85.0,
-      category: "Sweaters",
+      title: "Aesthetic Gothic Hoodie",
+      description: "Heavyweight brushed fleece hoodie with cyber-gothic typography sleeve prints. Double-lined hood, thick ribbing cuffs, and roomy kangaroo storage pocket.",
+      price: 58.0,
+      category: "Hoodies",
       images: [
-        "https://images.unsplash.com/photo-1614975058789-41316d0e2e9c?q=80&w=600&auto=format&fit=crop"
+        "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=600&auto=format&fit=crop"
       ],
-      colors: ["#E6DFD3", "#D2B48C"],
+      colors: ["#111111", "#7D5A8C"],
       sizes: ["S", "M", "L", "XL"],
-      rating: 4.6,
+      rating: 4.7,
       reviews: {
         create: [
           {
             rating: 5,
-            comment: "Softest cashmere sweater I own. Kept its shape after three washes.",
+            comment: "Thick hood details and cozy interior. Ideal for fall street fits.",
+            userName: "David Cole"
+          }
+        ]
+      }
+    },
+    {
+      title: "Retro Arcade Oversized Tee",
+      description: "Boxy drop-shoulder streetwear tee made of 100% combed ringspun cotton. Featuring pixelated retro console chest prints and classic aesthetic tags.",
+      price: 34.0,
+      category: "T-Shirts",
+      images: [
+        "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600&auto=format&fit=crop"
+      ],
+      colors: ["#FFFFFF", "#111111"],
+      sizes: ["M", "L", "XL"],
+      rating: 4.6,
+      reviews: {
+        create: [
+          {
+            rating: 4,
+            comment: "Comfortable material, bright colors print. Fast shipping.",
             userName: "Oliver Hayes"
           }
         ]

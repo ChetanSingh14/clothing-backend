@@ -65,4 +65,10 @@ model Wishlist {
   @@unique([userId, productId])
 }
 
+model Settings {
+  id          Int    @id @default(1)
+  companyName String @default("MDFK CLOTHING CO.")
+  logoUrl     String @default("/logo.jpg")
+}
+
 

@@ -9,6 +9,7 @@ import { userRoutes } from "./app/user/user.routes";
 import { productRoutes } from "./app/product/product.routes";
 import { orderRoutes } from "./app/order/order.routes";
 import { wishlistRoutes } from "./app/wishlist/wishlist.routes";
+import { settingsRoutes } from "./app/settings/settings.routes";
 
 class ExpressApp {
   public app: Application;
@@ -71,6 +72,9 @@ class ExpressApp {
 
     // Wishlist toggles routes
     this.app.use("/api/v1/wishlist", wishlistRoutes);
+
+    // Global settings configuration routes
+    this.app.use("/api/v1/settings", settingsRoutes);
   }
 
   private setupErrorHandling(): void {
