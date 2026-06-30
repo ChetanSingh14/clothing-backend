@@ -12,7 +12,34 @@ model User {
   name      String
   email     String    @unique
   password  String
+  role      String    @default("USER") // USER or ADMIN
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 }
+
+model Product {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  price        Float
+  category     String
+  images       String[] // Array of image paths/URLs
+  colors       String[] // Array of hex codes or color names
+  sizes        String[] // Array of sizes like S, M, L, XL
+  rating       Float    @default(5.0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  reviews      Review[]
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int      // 1 to 5 stars
+  comment   String
+  userName  String
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+

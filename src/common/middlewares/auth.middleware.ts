@@ -6,6 +6,7 @@ export interface AuthRequest extends Request {
   user?: {
     id: number;
     email: string;
+    role: string;
   };
 }
 
@@ -22,6 +23,7 @@ export const authenticateToken = () => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as {
         id: number;
         email: string;
+        role: string;
       };
       req.user = decoded;
       next();
@@ -30,3 +32,11 @@ export const authenticateToken = () => {
     }
   };
 };
+
+export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user || req.user.role !== 'ADMIN') {
+    return next(new ErrorHandler('Access forbidden. Admins only.', 403));
+  }
+  next();
+};
+

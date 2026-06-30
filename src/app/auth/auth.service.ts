@@ -26,12 +26,13 @@ export const registerService = async (name: string, email: string, password: str
       id: true,
       name: true,
       email: true,
+      role: true,
       createdAt: true,
     },
   });
 
   // Generate token
-  const token = generateJWTToken({ id: user.id, email: user.email });
+  const token = generateJWTToken({ id: user.id, email: user.email, role: user.role });
 
   return {
     user,
@@ -56,13 +57,14 @@ export const loginService = async (email: string, password: string) => {
   }
 
   // Generate token
-  const token = generateJWTToken({ id: user.id, email: user.email });
+  const token = generateJWTToken({ id: user.id, email: user.email, role: user.role });
 
   return {
     user: {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       createdAt: user.createdAt,
     },
     token,

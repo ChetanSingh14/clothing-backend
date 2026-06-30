@@ -10,10 +10,11 @@ export const comparePassword = async (password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash);
 };
 
-export const generateJWTToken = (user: { id: number; email: string }): string => {
+export const generateJWTToken = (user: { id: number; email: string; role: string }): string => {
   return jwt.sign(
-    { id: user.id, email: user.email },
+    { id: user.id, email: user.email, role: user.role },
     process.env.JWT_SECRET || "fallback_secret",
     { expiresIn: "30d" }
   );
 };
+

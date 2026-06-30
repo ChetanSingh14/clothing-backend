@@ -1,3 +1,4 @@
+import path from "path";
 import cors from "cors";
 import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
@@ -5,6 +6,7 @@ import cookieParser from "cookie-parser";
 import globalErrorHandler from "./common/middlewares/error.middleware";
 import { authRoutes } from "./app/auth/auth.routes";
 import { userRoutes } from "./app/user/user.routes";
+import { productRoutes } from "./app/product/product.routes";
 
 class ExpressApp {
   public app: Application;
@@ -17,11 +19,15 @@ class ExpressApp {
   }
 
   private setupMiddlewares(): void {
-    this.app.use(helmet());
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
+    // Disable crossOriginResourcePolicy check in helmet so local image URLs can be rendered by the Next.js frontend
+    this.app.use(helmet({
+      crossOriginResourcePolicy: false,
+    }));
+    this.app.use(express.json({ limit: "10mb" }));
+    this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
     this.app.use(cookieParser());
     this.setupCORS();
+    this.app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
   }
 
   private setupCORS(): void {
@@ -54,6 +60,9 @@ class ExpressApp {
 
     // User profile routes
     this.app.use("/api/v1/user", userRoutes);
+
+    // Products catalog & Admin routes
+    this.app.use("/api/v1/products", productRoutes);
   }
 
   private setupErrorHandling(): void {
