@@ -44,6 +44,8 @@ model Review {
   productId Int
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@index([productId])
 }
 
 model Order {
@@ -55,6 +57,8 @@ model Order {
   status        String   @default("BOOKED") // BOOKED, DELIVERED, CANCELLED
   paymentMethod String   @default("COD")
   createdAt     DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Wishlist {
