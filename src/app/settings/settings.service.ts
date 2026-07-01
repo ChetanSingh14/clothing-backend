@@ -46,7 +46,8 @@ export const updateSettingsService = async (data: { companyName?: string; logoUr
         const filePath = path.join(uploadsDir, fileName);
         fs.writeFileSync(filePath, buffer);
 
-        updateData.logoUrl = `http://localhost:4000/uploads/${fileName}`;
+        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 4000}`;
+        updateData.logoUrl = `${backendUrl}/uploads/${fileName}`;
       }
     } catch (err) {
       console.error("Failed to decode base64 logo:", err);

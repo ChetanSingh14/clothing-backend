@@ -12,9 +12,7 @@ import {
   deleteReview,
 } from "./product.controller";
 import { authenticateToken, authorizeAdmin } from "../../common/middlewares/auth.middleware";
-import fs from "fs";
-import path from "path";
-import ErrorHandler from "../../common/utils/errorHandler";
+import { uploadBase64Image, UploadRequest } from "../../common/middlewares/upload.middleware";
 
 const router = Router();
 
@@ -33,45 +31,18 @@ router.get("/admin/reviews", authenticateToken(), authorizeAdmin, getAdminReview
 router.delete("/admin/reviews/:id", authenticateToken(), authorizeAdmin, deleteReview);
 
 // Custom local base64 upload route for admin product uploads
-router.post("/admin/upload", authenticateToken(), authorizeAdmin, (req, res, next) => {
-  try {
-    const { image } = req.body;
-    if (!image) {
-      return next(new ErrorHandler("No image data provided. Expected base64 string.", 400));
-    }
-
-    const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    if (!matches || matches.length !== 3) {
-      return next(new ErrorHandler("Invalid image data format. Must be base64 data URI.", 400));
-    }
-
-    const fileType = matches[1];
-    const base64Data = matches[2];
-    const buffer = Buffer.from(base64Data, "base64");
-    
-    // Check extension
-    let ext = fileType.split("/")[1] || "png";
-    if (ext.includes("gltf-binary") || ext.includes("glb")) ext = "glb";
-    const fileName = `file_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
-    
-    const uploadDir = path.join(__dirname, "../../../public/uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    fs.writeFileSync(path.join(uploadDir, fileName), buffer);
-
-    const port = process.env.PORT || 4000;
-    const fileUrl = `http://localhost:${port}/uploads/${fileName}`;
-
+router.post(
+  "/admin/upload",
+  authenticateToken(),
+  authorizeAdmin,
+  uploadBase64Image,
+  (req: UploadRequest, res: any) => {
     res.status(201).json({
       success: true,
       message: "Image uploaded successfully",
-      url: fileUrl,
+      url: req.fileUrl,
     });
-  } catch (error) {
-    next(error);
   }
-});
+);
 
 export { router as productRoutes };
