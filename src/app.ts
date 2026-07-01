@@ -35,12 +35,10 @@ class ExpressApp {
   }
 
   private setupCORS(): void {
-    const corsOptions: cors.CorsOptions = {
-      origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000","https://clothing-mocha-nine.vercel.app/"],
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-      allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
-      credentials: true,
-    };
+  const corsOptions = {
+  origin: "*",
+  credentials: false,
+};
 
     this.app.options("*", cors(corsOptions));
     this.app.use(cors(corsOptions));
