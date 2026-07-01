@@ -1,6 +1,5 @@
 import prisma from "../../common/config/prisma.config";
-import fs from "fs";
-import path from "path";
+import { uploadToCloudinary } from "../../common/utils/cloudinary.utils";
 
 export const getSettingsService = async () => {
   let settings = await prisma.settings.findUnique({
@@ -32,25 +31,10 @@ export const updateSettingsService = async (data: { companyName?: string; logoUr
   // Handle base64 logo image upload if present
   if (data.logoUrl && data.logoUrl.startsWith("data:image")) {
     try {
-      const matches = data.logoUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-      if (matches && matches.length === 3) {
-        const fileExtension = matches[1].split("/")[1] || "png";
-        const buffer = Buffer.from(matches[2], "base64");
-        
-        const uploadsDir = path.join(__dirname, "../../../public/uploads");
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-
-        const fileName = `logo_${Date.now()}.${fileExtension}`;
-        const filePath = path.join(uploadsDir, fileName);
-        fs.writeFileSync(filePath, buffer);
-
-        const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 4000}`;
-        updateData.logoUrl = `${backendUrl}/uploads/${fileName}`;
-      }
+      const fileUrl = await uploadToCloudinary(data.logoUrl, "settings");
+      updateData.logoUrl = fileUrl;
     } catch (err) {
-      console.error("Failed to decode base64 logo:", err);
+      console.error("Failed to upload logo to Cloudinary:", err);
     }
   } else if (data.logoUrl !== undefined) {
     updateData.logoUrl = data.logoUrl;
