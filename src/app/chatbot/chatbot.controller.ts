@@ -1,13 +1,14 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../common/middlewares/auth.middleware";
 import { catchAsyncError } from "../../common/utils/errorHandler";
-import { GoogleGenAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import prisma from "../../common/config/prisma.config";
 
 export const handleChatbotMessage = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { message, history } = req.body;
     const user = req.user;
+    let userName = "";
 
     if (!message) {
       res.status(400).json({ success: false, message: "Message is required" });
@@ -17,12 +18,18 @@ export const handleChatbotMessage = catchAsyncError(
     // Gather contextual user info if logged in
     let contextPrompt = "";
     if (user) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { name: true }
+      });
+      userName = dbUser?.name || "Customer";
+
       const orders = await prisma.order.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: "desc" },
         take: 5
       });
-      contextPrompt = `\nYou are chatting with ${user.name} (Email: ${user.email}). `;
+      contextPrompt = `\nYou are chatting with ${userName} (Email: ${user.email}). `;
       if (orders.length > 0) {
         contextPrompt += `Their recent orders are:\n${orders
           .map((o) => `- Order ID #${o.id}: Total $${o.totalAmount}, Status: ${o.status}, Payment: ${o.paymentMethod}, Date: ${o.createdAt.toDateString()}`)
@@ -38,7 +45,7 @@ export const handleChatbotMessage = catchAsyncError(
 
     if (apiKey) {
       try {
-        const ai = new GoogleGenAI({ apiKey });
+        const ai = new GoogleGenerativeAI(apiKey);
         const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const systemInstruction = `You are a helpful customer support assistant for Flowbox, a premium clothing brand. 
@@ -92,7 +99,7 @@ Keep your answers brief, friendly, and structured using clean markdown bullet po
 
     if (query.includes("hello") || query.includes("hi") || query.includes("hey")) {
       reply = user 
-        ? `Hello ${user.name}! Welcome to Flowbox Support. How can I help you track your orders, manage your wishlist, or learn about our hoodies and t-shirts today?`
+        ? `Hello ${userName}! Welcome to Flowbox Support. How can I help you track your orders, manage your wishlist, or learn about our hoodies and t-shirts today?`
         : `Hello there! Welcome to Flowbox Support. How can I assist you today? You can ask about our catalog, return policy, or log in to track your orders.`;
     } else if (query.includes("product") || query.includes("catalog") || query.includes("sell") || query.includes("t-shirt") || query.includes("hoodie")) {
       reply = `Flowbox offers a premium collection of minimalist clothing. We focus exclusively on two key categories:
@@ -112,11 +119,11 @@ You can browse our collections on the home page!`;
           take: 3
         });
         if (orders.length > 0) {
-          reply = `Here are your recent orders, ${user.name}:\n\n` + orders
+          reply = `Here are your recent orders, ${userName}:\n\n` + orders
             .map((o) => `* **Order #${o.id}**: $${o.totalAmount} (${o.status}) - Paid via ${o.paymentMethod} on ${o.createdAt.toLocaleDateString()}`)
             .join("\n") + `\n\nYou can cancel any order marked as **BOOKED** directly from your **Orders** dashboard.`;
         } else {
-          reply = `Hi ${user.name}, you haven't placed any orders with Flowbox yet. Browse our signature Hoodies and T-Shirts on the homepage to place your first Cash on Delivery order!`;
+          reply = `Hi ${userName}, you haven't placed any orders with Flowbox yet. Browse our signature Hoodies and T-Shirts on the homepage to place your first Cash on Delivery order!`;
         }
       } else {
         reply = `To track your orders, please click the **Sign In** button at the top right to log into your account. Once logged in, you can view your complete order history under the **Orders** tab.`;

@@ -34,7 +34,7 @@ export const getMyOrders = catchAsyncError(
 export const updateOrderStatus = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const userId = req.user?.id;
-    const orderId = parseInt(req.params.id);
+    const orderId = Number(req.params.id);
     const { status } = req.body;
     
     if (!userId) throw new ErrorHandler("Unauthorized", 401);
