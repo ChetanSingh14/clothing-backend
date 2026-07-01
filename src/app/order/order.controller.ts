@@ -1,13 +1,13 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../common/middlewares/auth.middleware";
-import { createOrderService, getAdminOrdersService } from "./order.service";
+import { createOrderService, getAdminOrdersService, getMyOrdersService, updateOrderStatusService } from "./order.service";
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
 
 export const createOrder = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const userId = req.user?.id;
-    const { totalAmount, items } = req.body;
+    const { totalAmount, items, paymentMethod } = req.body;
 
     if (!userId) {
       throw new ErrorHandler("Unauthorized", 401);
@@ -17,8 +17,31 @@ export const createOrder = catchAsyncError(
     }
 
     logger.info(`📦 [Order] Placement attempt by user ID ${userId} for amount $${totalAmount}`);
-    const result = await createOrderService(userId, totalAmount, items);
+    const result = await createOrderService(userId, totalAmount, items, paymentMethod);
     res.status(201).json(result);
+  }
+);
+
+export const getMyOrders = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const userId = req.user?.id;
+    if (!userId) throw new ErrorHandler("Unauthorized", 401);
+    const result = await getMyOrdersService(userId);
+    res.status(200).json(result);
+  }
+);
+
+export const updateOrderStatus = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const userId = req.user?.id;
+    const orderId = parseInt(req.params.id);
+    const { status } = req.body;
+    
+    if (!userId) throw new ErrorHandler("Unauthorized", 401);
+    if (isNaN(orderId) || !status) throw new ErrorHandler("Invalid request data", 400);
+    
+    const result = await updateOrderStatusService(userId, orderId, status);
+    res.status(200).json(result);
   }
 );
 
