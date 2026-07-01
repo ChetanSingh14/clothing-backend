@@ -10,6 +10,7 @@ import { productRoutes } from "./app/product/product.routes";
 import { orderRoutes } from "./app/order/order.routes";
 import { wishlistRoutes } from "./app/wishlist/wishlist.routes";
 import { settingsRoutes } from "./app/settings/settings.routes";
+import { chatbotRoutes } from "./app/chatbot/chatbot.routes";
 
 class ExpressApp {
   public app: Application;
@@ -75,6 +76,9 @@ class ExpressApp {
 
     // Global settings configuration routes
     this.app.use("/api/v1/settings", settingsRoutes);
+
+    // Chatbot AI & faq routes
+    this.app.use("/api/v1/chatbot", chatbotRoutes);
   }
 
   private setupErrorHandling(): void {
