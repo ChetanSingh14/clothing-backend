@@ -12,7 +12,7 @@ export const getWishlistService = async (userId: number) => {
 
   return {
     success: true,
-    data: wishlists.map((w) => w.product),
+    data: wishlists.map((w: any) => w.product),
   };
 };
 

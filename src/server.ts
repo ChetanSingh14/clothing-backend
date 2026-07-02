@@ -8,12 +8,12 @@ import prisma from "./common/config/prisma.config";
 
 const PORT: number = Number(process.env.PORT) || 4000;
 
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', (err: Error) => {
   logger.error('CRITICAL: Uncaught Exception! 💥 Shutting down...', err);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', (err: any) => {
   logger.error('CRITICAL: Unhandled Rejection! 💥', err);
 });
 
@@ -45,7 +45,7 @@ const startServer = async (): Promise<void> => {
 
       logger.info(`🛑 ${signal} received. Starting graceful shutdown...`);
 
-      httpServer.close((err) => {
+      httpServer.close((err?: Error) => {
         if (err) logger.error('Error closing HTTP server:', err);
         else logger.info('HTTP server closed.');
       });

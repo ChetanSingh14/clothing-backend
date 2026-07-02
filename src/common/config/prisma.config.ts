@@ -21,7 +21,7 @@ if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;
 }
 
-prisma.$connect().catch((error) => {
+prisma.$connect().catch((error: any) => {
   logger.error('Failed to connect to Prisma database:', error);
   process.exit(1);
 });
