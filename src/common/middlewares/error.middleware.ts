@@ -19,12 +19,18 @@ const sendErrorDev = (err: CustomError, req: Request, res: Response): void => {
     fullError: err
   }));
 
-  res.status(err.statusCode || 500).json({
+  const responsePayload: any = {
     success: false,
     status: err.status,
     message: err.message,
-    stack: err.stack
-  });
+  };
+
+  // Only include stack trace if not in production
+  if (process.env.NODE_ENV !== 'production') {
+    responsePayload.stack = err.stack;
+  }
+
+  res.status(err.statusCode || 500).json(responsePayload);
 };
 
 const globalErrorHandler = (

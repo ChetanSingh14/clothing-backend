@@ -3,6 +3,7 @@ import cors from "cors";
 import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 import globalErrorHandler from "./common/middlewares/error.middleware";
 import { authRoutes } from "./app/auth/auth.routes";
 import { userRoutes } from "./app/user/user.routes";
@@ -30,15 +31,45 @@ class ExpressApp {
     this.app.use(express.json({ limit: "10mb" }));
     this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
     this.app.use(cookieParser());
+    
+    // Rate Limiting
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+      standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+      legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+      message: "Too many requests from this IP, please try again after 15 minutes",
+    });
+    this.app.use(limiter);
+
     this.setupCORS();
     this.app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
   }
 
   private setupCORS(): void {
-  const corsOptions = {
-  origin: "*",
-  credentials: false,
-};
+    const isProd = process.env.NODE_ENV === "production";
+    
+    // In development, allow localhost. In production, allow your real domains.
+    let allowedOrigins = isProd
+      ? ["https://www.mdfkclothing.com", "https://mdfkclothing.com"]
+      : ["http://localhost:3000", "http://localhost:3001"];
+
+    // If an environment variable is explicitly provided, we can add it or override
+    if (process.env.ALLOWED_ORIGINS && process.env.ALLOWED_ORIGINS !== "*") {
+      const extraOrigins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
+      allowedOrigins = [...allowedOrigins, ...extraOrigins];
+    }
+
+    const corsOptions = {
+      origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+      },
+      credentials: true,
+    };
 
     this.app.options("*", cors(corsOptions));
     this.app.use(cors(corsOptions));

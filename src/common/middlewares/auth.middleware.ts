@@ -19,8 +19,12 @@ export const authenticateToken = () => {
       return next(new ErrorHandler('Access denied. No token provided.', 401));
     }
 
+    if (!process.env.JWT_SECRET) {
+      return next(new ErrorHandler('Internal server error: missing JWT configuration.', 500));
+    }
+
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET) as {
         id: number;
         email: string;
         role: string;

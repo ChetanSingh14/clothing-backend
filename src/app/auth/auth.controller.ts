@@ -22,7 +22,7 @@ export const signup = catchAsyncError(
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      data: result,
+      data: { user: result.user },
     });
   }
 );
@@ -46,7 +46,7 @@ export const login = catchAsyncError(
     res.status(200).json({
       success: true,
       message: "User logged in successfully",
-      data: result,
+      data: { user: result.user },
     });
   }
 );
