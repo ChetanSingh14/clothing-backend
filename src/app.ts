@@ -47,12 +47,13 @@ class ExpressApp {
   }
 
   private setupCORS(): void {
-    const isProd = process.env.NODE_ENV === "production";
-    
-    // In development, allow localhost. In production, allow your real domains.
-    let allowedOrigins = isProd
-      ? ["https://www.mdfkclothing.com", "https://mdfkclothing.com"]
-      : ["http://localhost:3000", "http://localhost:3001"];
+    // Unconditionally allow both local and production frontend domains to prevent NODE_ENV issues
+    let allowedOrigins = [
+      "https://www.mdfkclothing.com", 
+      "https://mdfkclothing.com",
+      "http://localhost:3000", 
+      "http://localhost:3001"
+    ];
 
     // If an environment variable is explicitly provided, we can add it or override
     if (process.env.ALLOWED_ORIGINS && process.env.ALLOWED_ORIGINS !== "*") {
