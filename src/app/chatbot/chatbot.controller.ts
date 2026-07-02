@@ -48,7 +48,7 @@ export const handleChatbotMessage = catchAsyncError(
         const ai = new GoogleGenerativeAI(apiKey);
         const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const systemInstruction = `You are a helpful customer support assistant for Flowbox, a premium clothing brand. 
+        const systemInstruction = `You are a helpful customer support assistant for MDFK Clothing, a premium clothing brand. 
 We specialize exclusively in high-quality T-Shirts and Hoodies (other categories like coats, sneakers, or sweaters have been removed).
 Our brand guidelines:
 - Warm cream-colored brand aesthetic.
@@ -99,16 +99,16 @@ Keep your answers brief, friendly, and structured using clean markdown bullet po
 
     if (query.includes("hello") || query.includes("hi") || query.includes("hey")) {
       reply = user 
-        ? `Hello ${userName}! Welcome to Flowbox Support. How can I help you track your orders, manage your wishlist, or learn about our hoodies and t-shirts today?`
-        : `Hello there! Welcome to Flowbox Support. How can I assist you today? You can ask about our catalog, return policy, or log in to track your orders.`;
+        ? `Hello ${userName}! Welcome to MDFK Clothing Support. How can I help you track your orders, manage your wishlist, or learn about our hoodies and t-shirts today?`
+        : `Hello there! Welcome to MDFK Clothing Support. How can I assist you today? You can ask about our catalog, return policy, or log in to track your orders.`;
     } else if (query.includes("product") || query.includes("catalog") || query.includes("sell") || query.includes("t-shirt") || query.includes("hoodie")) {
-      reply = `Flowbox offers a premium collection of minimalist clothing. We focus exclusively on two key categories:
+      reply = `MDFK Clothing offers a premium collection of minimalist clothing. We focus exclusively on two key categories:
 - **T-Shirts**: Premium heavy-cotton everyday essentials.
 - **Hoodies**: Warm, oversized, ultra-soft loungewear.
 
 You can browse our collections on the home page!`;
     } else if (query.includes("return") || query.includes("refund") || query.includes("exchange") || query.includes("policy")) {
-      reply = `We want you to love your purchase! Flowbox provides a hassle-free **7-day return policy** on all delivered orders. If you aren't satisfied, you can initiate a return within 7 days of delivery.`;
+      reply = `We want you to love your purchase! MDFK Clothing provides a hassle-free **7-day return policy** on all delivered orders. If you aren't satisfied, you can initiate a return within 7 days of delivery.`;
     } else if (query.includes("payment") || query.includes("pay") || query.includes("cod") || query.includes("cash")) {
       reply = `We support **Cash on Delivery (COD)** for all purchases! You can select Cash on Delivery in the checkout drawer, pay when your parcel is delivered, and enjoy peace of mind.`;
     } else if (query.includes("order") || query.includes("track") || query.includes("booked") || query.includes("status")) {
@@ -123,7 +123,7 @@ You can browse our collections on the home page!`;
             .map((o) => `* **Order #${o.id}**: $${o.totalAmount} (${o.status}) - Paid via ${o.paymentMethod} on ${o.createdAt.toLocaleDateString()}`)
             .join("\n") + `\n\nYou can cancel any order marked as **BOOKED** directly from your **Orders** dashboard.`;
         } else {
-          reply = `Hi ${userName}, you haven't placed any orders with Flowbox yet. Browse our signature Hoodies and T-Shirts on the homepage to place your first Cash on Delivery order!`;
+          reply = `Hi ${userName}, you haven't placed any orders with MDFK Clothing yet. Browse our signature Hoodies and T-Shirts on the homepage to place your first Cash on Delivery order!`;
         }
       } else {
         reply = `To track your orders, please click the **Sign In** button at the top right to log into your account. Once logged in, you can view your complete order history under the **Orders** tab.`;
@@ -131,7 +131,7 @@ You can browse our collections on the home page!`;
     } else if (query.includes("wishlist") || query.includes("like")) {
       reply = `You can save products you love by clicking the Heart icon on any product page. To view and manage your liked items, simply click the Heart icon at the top of the header to open your **Wishlist**!`;
     } else {
-      reply = `I'm here to help you with Flowbox! You can ask me about:
+      reply = `I'm here to help you with MDFK Clothing! You can ask me about:
 - Our core catalog (**T-Shirts** and **Hoodies**)
 - Our **7-day return policy**
 - Placing a **Cash on Delivery (COD)** order

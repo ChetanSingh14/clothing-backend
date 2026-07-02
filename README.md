@@ -1,6 +1,6 @@
-# Flowbox API Server
+# MDFK Clothing API Server
 
-Flowbox API is a robust, modular, and secure backend server built with Express.js, TypeScript, and Prisma ORM, referencing the production-level structure and error-handling mechanisms of `DozoServerNodeV2`.
+MDFK Clothing API is a robust, modular, and secure backend server built with Express.js, TypeScript, and Prisma ORM, referencing the production-level structure and error-handling mechanisms of `DozoServerNodeV2`.
 
 ## ✨ Key Features
 

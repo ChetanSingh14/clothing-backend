@@ -63,3 +63,17 @@ export const getAdminOrdersService = async () => {
     data: orders,
   };
 };
+
+export const updateAdminOrderStatusService = async (orderId: number, status: string) => {
+  const order = await prisma.order.findFirst({ where: { id: orderId } });
+  if (!order) {
+    throw new ErrorHandler("Order not found", 404);
+  }
+  
+  const updatedOrder = await prisma.order.update({
+    where: { id: orderId },
+    data: { status },
+  });
+
+  return { success: true, data: updatedOrder };
+};
