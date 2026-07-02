@@ -3,6 +3,16 @@ import { registerService, loginService } from "./auth.service";
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
 
+const getCookieOptions = (req: Request) => {
+  const isSecure = req.secure || req.headers["x-forwarded-proto"] === "https";
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? ("none" as const) : ("lax" as const),
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  };
+};
+
 export const signup = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { name, email, password } = req.body;
@@ -12,12 +22,7 @@ export const signup = catchAsyncError(
     const result = await registerService(name, email, password);
 
     // Set auth token cookie
-    res.cookie("authToken", result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
+    res.cookie("authToken", result.token, getCookieOptions(req));
 
     res.status(201).json({
       success: true,
@@ -36,12 +41,7 @@ export const login = catchAsyncError(
     const result = await loginService(email, password);
 
     // Set auth token cookie
-    res.cookie("authToken", result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
+    res.cookie("authToken", result.token, getCookieOptions(req));
 
     res.status(200).json({
       success: true,
@@ -53,11 +53,8 @@ export const login = catchAsyncError(
 
 export const logout = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    res.clearCookie("authToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-    });
+    const { maxAge, ...clearOptions } = getCookieOptions(req);
+    res.clearCookie("authToken", clearOptions);
 
     res.status(200).json({
       success: true,

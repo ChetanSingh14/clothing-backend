@@ -24,6 +24,7 @@ class ExpressApp {
   }
 
   private setupMiddlewares(): void {
+    this.app.set("trust proxy", 1);
     // Disable crossOriginResourcePolicy check in helmet so local image URLs can be rendered by the Next.js frontend
     this.app.use(helmet({
       crossOriginResourcePolicy: false,
