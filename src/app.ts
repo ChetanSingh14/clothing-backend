@@ -30,7 +30,14 @@ class ExpressApp {
     this.app.use(helmet({
       crossOriginResourcePolicy: false,
     }));
-    this.app.use(express.json({ limit: "10mb" }));
+    this.app.use(express.json({ 
+      limit: "10mb",
+      verify: (req: any, res, buf) => {
+        if (req.originalUrl.startsWith("/api/v1/webhooks")) {
+          req.rawBody = buf.toString('utf8');
+        }
+      }
+    }));
     this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
     this.app.use(cookieParser());
     

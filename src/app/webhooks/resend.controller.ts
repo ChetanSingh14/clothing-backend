@@ -1,26 +1,50 @@
 import { Request, Response } from "express";
+import { Webhook } from "svix";
 
-export const handleResendWebhook = async (req: Request, res: Response) => {
+export const handleResendWebhook = async (req: Request, res: Response): Promise<void> => {
   try {
-    const payload = req.body;
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
     
-    // Log the webhook payload for debugging and monitoring
-    console.log("Received Resend Webhook:", JSON.stringify(payload, null, 2));
+    if (!webhookSecret) {
+      console.warn("RESEND_WEBHOOK_SECRET is not defined. Skipping verification.");
+      res.status(500).json({ error: "Webhook secret missing" });
+      return;
+    }
+
+    const payload = (req as any).rawBody;
+    const headers = {
+      "svix-id": req.headers["svix-id"] as string,
+      "svix-timestamp": req.headers["svix-timestamp"] as string,
+      "svix-signature": req.headers["svix-signature"] as string,
+    };
+
+    const wh = new Webhook(webhookSecret);
+    let evt: any;
+
+    try {
+      evt = wh.verify(payload, headers);
+    } catch (err: any) {
+      console.error("Webhook signature verification failed:", err.message);
+      res.status(400).json({ error: "Invalid signature" });
+      return;
+    }
+
+    // Log the verified webhook payload for debugging and monitoring
+    console.log("Verified Resend Webhook Event:", evt.type);
 
     // Handle different event types from Resend
-    // Examples: 'email.sent', 'email.delivered', 'email.bounced', 'email.complained'
-    const eventType = payload.type;
+    const eventType = evt.type;
+    const eventData = evt.data;
     
     switch (eventType) {
       case "email.delivered":
-        console.log(`Email delivered to: ${payload.data.to[0]}`);
+        console.log(`Email delivered to: ${eventData.to[0]}`);
         break;
       case "email.bounced":
-        console.log(`Email bounced for: ${payload.data.to[0]}. Reason: ${payload.data.bounce_summary}`);
-        // Here you could update user status in DB if needed
+        console.log(`Email bounced for: ${eventData.to[0]}. Reason: ${eventData.bounce_summary}`);
         break;
       case "email.complained":
-        console.log(`Email spam complaint from: ${payload.data.to[0]}`);
+        console.log(`Email spam complaint from: ${eventData.to[0]}`);
         break;
       default:
         console.log(`Unhandled Resend event type: ${eventType}`);
