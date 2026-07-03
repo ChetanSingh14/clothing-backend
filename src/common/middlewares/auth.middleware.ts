@@ -11,9 +11,9 @@ export interface AuthRequest extends Request {
 }
 
 export const authenticateToken = () => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
-    const token = (authHeader && authHeader.split(' ')[1]) || req.cookies?.authToken;
+    const token = (authHeader && authHeader.split(' ')[1]);
 
     if (!token) {
       return next(new ErrorHandler('Access denied. No token provided.', 401));
@@ -29,6 +29,18 @@ export const authenticateToken = () => {
         email: string;
         role: string;
       };
+
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      const dbUser = await prisma.user.findUnique({
+        where: { id: decoded.id }
+      });
+
+      if (!dbUser || dbUser.token !== token) {
+        return next(new ErrorHandler('Session expired or invalid token', 401));
+      }
+
       req.user = decoded;
       next();
     } catch (error) {

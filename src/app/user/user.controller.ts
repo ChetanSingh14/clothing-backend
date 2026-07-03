@@ -21,18 +21,24 @@ export const getMyProfile = catchAsyncError(
 export const updateProfile = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const userId = req.user?.id;
-    const { name } = req.body;
+    const { name, profileImage, fullName, phone, address, landmark, pincode, state, city } = req.body;
 
     if (!userId) {
       logger.error("Unauthorized profile update attempt");
       throw new ErrorHandler("Unauthorized", 401);
     }
 
-    if (!name) {
-      throw new ErrorHandler("Name is required to update profile", 400);
-    }
-
-    const result = await updateProfileService(userId, name);
+    const result = await updateProfileService(userId, {
+      name,
+      profileImage,
+      fullName,
+      phone,
+      address,
+      landmark,
+      pincode,
+      state,
+      city,
+    });
     res.status(200).json(result);
   }
 );

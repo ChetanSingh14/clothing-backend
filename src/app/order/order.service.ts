@@ -1,7 +1,22 @@
 import prisma from "../../common/config/prisma.config";
 import ErrorHandler from "../../common/utils/errorHandler";
 
-export const createOrderService = async (userId: number, totalAmount: number, items: any, paymentMethod: string = "COD") => {
+export const createOrderService = async (
+  userId: number,
+  totalAmount: number,
+  items: any,
+  paymentMethod: string = "COD",
+  details?: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    landmark?: string;
+    pincode?: string;
+    state?: string;
+    city?: string;
+  }
+) => {
   const order = await prisma.order.create({
     data: {
       userId,
@@ -9,6 +24,14 @@ export const createOrderService = async (userId: number, totalAmount: number, it
       items: items, // JSON array of items
       paymentMethod,
       status: "BOOKED",
+      fullName: details?.fullName,
+      email: details?.email,
+      phone: details?.phone,
+      address: details?.address,
+      landmark: details?.landmark,
+      pincode: details?.pincode,
+      state: details?.state,
+      city: details?.city,
     },
   });
 

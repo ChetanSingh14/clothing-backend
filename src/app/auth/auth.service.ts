@@ -34,6 +34,12 @@ export const registerService = async (name: string, email: string, password: str
   // Generate token
   const token = generateJWTToken({ id: user.id, email: user.email, role: user.role });
 
+  // Save token to DB
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { token },
+  });
+
   return {
     user,
     token,
@@ -59,6 +65,12 @@ export const loginService = async (email: string, password: string) => {
   // Generate token
   const token = generateJWTToken({ id: user.id, email: user.email, role: user.role });
 
+  // Save token to DB
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { token },
+  });
+
   return {
     user: {
       id: user.id,
@@ -70,4 +82,12 @@ export const loginService = async (email: string, password: string) => {
     token,
   };
 };
-export default { registerService, loginService };
+
+export const invalidateTokenService = async (userId: number) => {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { token: null },
+  });
+};
+
+export default { registerService, loginService, invalidateTokenService };

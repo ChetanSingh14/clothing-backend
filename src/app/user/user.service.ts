@@ -9,6 +9,15 @@ export const getUserProfileService = async (userId: number) => {
       name: true,
       email: true,
       role: true,
+   
+      profileImage: true,
+      fullName: true,
+      phone: true,
+      address: true,
+      landmark: true,
+      pincode: true,
+      state: true,
+      city: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -24,14 +33,35 @@ export const getUserProfileService = async (userId: number) => {
   };
 };
 
-export const updateProfileService = async (userId: number, name: string) => {
+export const updateProfileService = async (
+  userId: number,
+  data: {
+    name?: string;
+    profileImage?: string;
+    fullName?: string;
+    phone?: string;
+    address?: string;
+    landmark?: string;
+    pincode?: string;
+    state?: string;
+    city?: string;
+  }
+) => {
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { name },
+    data,
     select: {
       id: true,
       name: true,
       email: true,
+      profileImage: true,
+      fullName: true,
+      phone: true,
+      address: true,
+      landmark: true,
+      pincode: true,
+      state: true,
+      city: true,
       updatedAt: true,
     },
   });

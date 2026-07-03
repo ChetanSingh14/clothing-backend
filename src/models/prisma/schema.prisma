@@ -8,16 +8,25 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  role      String    @default("USER") // USER or ADMIN
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  orders    Order[]
-  wishlists Wishlist[]
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String     @unique
+  password     String
+  role         String     @default("USER") // USER or ADMIN
+  token        String?    // Active JWT token for session management
+  profileImage String?
+  fullName     String?
+  phone        String?
+  address      String?
+  landmark     String?
+  pincode      String?
+  state        String?
+  city         String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  orders       Order[]
+  wishlists    Wishlist[]
 }
 
 model Product {
@@ -49,13 +58,21 @@ model Review {
 }
 
 model Order {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalAmount Float
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount   Float
   items         Json     // Array of bought items with quantity, color, size, title, price
   status        String   @default("BOOKED") // BOOKED, DELIVERED, CANCELLED
   paymentMethod String   @default("COD")
+  fullName      String?
+  email         String?
+  phone         String?
+  address       String?
+  landmark      String?
+  pincode       String?
+  state         String?
+  city          String?
   createdAt     DateTime @default(now())
 
   @@index([userId])
