@@ -12,6 +12,7 @@ import { orderRoutes } from "./app/order/order.routes";
 import { wishlistRoutes } from "./app/wishlist/wishlist.routes";
 import { settingsRoutes } from "./app/settings/settings.routes";
 import { chatbotRoutes } from "./app/chatbot/chatbot.routes";
+import { webhooksRoutes } from "./app/webhooks/webhooks.routes";
 
 class ExpressApp {
   public app: Application;
@@ -110,6 +111,9 @@ class ExpressApp {
 
     // Chatbot AI & faq routes
     this.app.use("/api/v1/chatbot", chatbotRoutes);
+
+    // Webhooks routes
+    this.app.use("/api/v1/webhooks", webhooksRoutes);
   }
 
   private setupErrorHandling(): void {

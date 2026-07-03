@@ -1,6 +1,7 @@
 import prisma from "../../common/config/prisma.config";
 import ErrorHandler from "../../common/utils/errorHandler";
 import { hashPassword, comparePassword, generateJWTToken } from "./auth.utils";
+import { sendWelcomeEmail } from "../../common/services/email.service";
 
 export const registerService = async (name: string, email: string, password: string) => {
   // Check if user already exists
@@ -47,6 +48,9 @@ export const registerService = async (name: string, email: string, password: str
     where: { id: user.id },
     data: { token },
   });
+
+  // Send Welcome Email asynchronously
+  sendWelcomeEmail(user.email, user.name);
 
   return {
     user,
