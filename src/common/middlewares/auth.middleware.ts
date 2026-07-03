@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import ErrorHandler from '../utils/errorHandler';
 
+import prisma from "../../common/config/prisma.config";
 export interface AuthRequest extends Request {
   user?: {
     id: number;
@@ -30,9 +31,6 @@ export const authenticateToken = () => {
         role: string;
       };
 
-      const { PrismaClient } = require('@prisma/client');
-      const prisma = new PrismaClient();
-      
       const dbUser = await prisma.user.findUnique({
         where: { id: decoded.id }
       });
@@ -44,6 +42,7 @@ export const authenticateToken = () => {
       req.user = decoded;
       next();
     } catch (error) {
+      console.error('Auth middleware error:', error);
       return next(new ErrorHandler('Invalid token, please login again', 401));
     }
   };
