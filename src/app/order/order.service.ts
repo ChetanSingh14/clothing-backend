@@ -3,7 +3,8 @@ import ErrorHandler from "../../common/utils/errorHandler";
 import { 
   sendOrderConfirmationEmail, 
   sendOrderDeliveredEmail, 
-  sendOrderInvoiceEmail 
+  sendOrderInvoiceEmail,
+  sendNewOrderAlertEmail
 } from "../../common/services/email.service";
 
 
@@ -57,6 +58,9 @@ export const createOrderService = async (
     sendOrderConfirmationEmail(email, order);
     sendOrderInvoiceEmail(email, order);
   }
+
+  // Send New Order Alert to Admin emails
+  sendNewOrderAlertEmail(order);
 
   return {
     success: true,

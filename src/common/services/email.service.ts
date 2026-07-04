@@ -8,9 +8,18 @@ dotenv.config();
 // Cache logo base64 string in memory
 let logoBase64 = "";
 try {
-  const logoPath = "/public/uploads/logo.jpeg";
+  let logoPath = "/public/uploads/logo_1782819118733.jpeg";
+  if (!fs.existsSync(logoPath)) {
+    logoPath = path.join(process.cwd(), "public/uploads/logo_1782819118733.jpeg");
+  }
+  if (!fs.existsSync(logoPath)) {
+    logoPath = path.join(__dirname, "../../../public/uploads/logo_1782819118733.jpeg");
+  }
+  
   if (fs.existsSync(logoPath)) {
     logoBase64 = fs.readFileSync(logoPath).toString("base64");
+  } else {
+    console.warn("Logo file not found at path:", logoPath);
   }
 } catch (err) {
   console.error("Failed to read logo image:", err);
@@ -581,5 +590,177 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
     return data;
   } catch (error) {
     console.error("Failed to send order invoice email:", error);
+  }
+};
+
+export const sendNewOrderAlertEmail = async (order: any) => {
+  if (!resend) {
+    console.warn("Resend client not initialized. Skipping new order alert email.");
+    return;
+  }
+
+  try {
+    const fullName = order.fullName || "Customer";
+    const orderId = order.id;
+    const email = order.email || "No Email Provided";
+    const phone = order.phone || "No Phone Provided";
+    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    const paymentMethod = order.paymentMethod || "COD";
+    const addressDetails = `${order.address || ""}, ${order.landmark ? order.landmark + ", " : ""}${order.city || ""}, ${order.state || ""} - ${order.pincode || ""}`;
+
+    // Calculate items HTML
+    let itemsHtml = "";
+    let subtotal = 0;
+    const itemsList = Array.isArray(order.items) ? order.items : [];
+    
+    for (const item of itemsList) {
+      const price = Number(item.price) || 0;
+      const qty = Number(item.quantity) || 1;
+      const totalItemPrice = price * qty;
+      subtotal += totalItemPrice;
+
+      itemsHtml += `
+        <tr>
+          <td style="padding: 12px 0; border-bottom: 1px solid #eeeeee; vertical-align: top;">
+            <div style="font-size: 14px; font-weight: bold; color: #333333;">${item.title}</div>
+            <div style="font-size: 12px; color: #777777; margin-top: 2px;">Color: ${item.color || "N/A"} | Size: ${item.size || "N/A"}</div>
+          </td>
+          <td align="center" style="padding: 12px 0; border-bottom: 1px solid #eeeeee; font-size: 14px; color: #333333; vertical-align: top;">
+            ${qty}
+          </td>
+          <td align="right" style="padding: 12px 0; border-bottom: 1px solid #eeeeee; font-size: 14px; color: #333333; vertical-align: top; font-weight: bold;">
+            $${price.toFixed(2)}
+          </td>
+        </tr>
+      `;
+    }
+
+    const totalAmount = order.totalAmount || subtotal;
+
+    const logoSrc = logoBase64 
+      ? `data:image/png;base64,${logoBase64}` 
+      : "https://mdfkclothing.com/logo.png";
+
+    const recipients = ["mdkf.clothing@gmail.com", "siradhanachetan14@gmail.com"];
+
+    const { data, error } = await resend.emails.send({
+      from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
+      to: recipients,
+      subject: `[ALERT] New Booking Created #${orderId} - MDFK Clothing`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>New Order Alert</title>
+        </head>
+        <body style="margin:0;padding:0;background-color:#f4f4f4;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333333;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;padding:30px 0;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid #dcdcdc; border-radius: 6px; overflow: hidden; text-align: left;">
+                  
+                  <!-- Header bar -->
+                  <tr>
+                    <td style="background-color:#0a0a0a;padding:20px 25px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td valign="middle">
+                            <img src="${logoSrc}" width="60" style="display:block; max-height:60px;" alt="MDFK Logo" />
+                          </td>
+                          <td align="right" valign="middle" style="color: #ffffff; font-size: 16px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">
+                            New Order Alert
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Notification Body -->
+                  <tr>
+                    <td style="padding: 30px 25px;">
+                      <p style="font-size: 15px; line-height: 1.6; margin: 0 0 20px 0; color: #555555;">
+                        Hello Admin, a new booking has been placed on the store. Below are the order and customer details.
+                      </p>
+
+                      <!-- Detail box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9f9f9; border:1px solid #eaeaea; border-radius: 4px; padding: 20px; margin-bottom: 30px;">
+                        <tr>
+                          <td style="font-size: 13px; line-height: 1.8; color: #666666;">
+                            <strong style="color:#111111;">Order ID:</strong> #${orderId}<br/>
+                            <strong style="color:#111111;">Date:</strong> ${orderDate}<br/>
+                            <strong style="color:#111111;">Payment Method:</strong> ${paymentMethod}
+                          </td>
+                          <td style="font-size: 13px; line-height: 1.8; color: #666666; padding-left: 20px; vertical-align: top;">
+                            <strong style="color:#111111;">Customer:</strong> ${fullName}<br/>
+                            <strong style="color:#111111;">Email:</strong> ${email}<br/>
+                            <strong style="color:#111111;">Phone:</strong> ${phone}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="2" style="font-size: 13px; line-height: 1.8; color: #666666; pt-15; border-top: 1px solid #eaeaea; margin-top: 15px; padding-top: 15px;">
+                            <strong style="color:#111111;">Delivery Address:</strong><br/>
+                            ${addressDetails}
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Items table -->
+                      <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #111111; margin: 0 0 15px 0; border-bottom: 2px solid #111111; padding-bottom: 5px;">Ordered Items</h3>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                        <thead>
+                          <tr>
+                            <th align="left" style="padding-bottom: 8px; color: #777777; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #eaeaea;">Item</th>
+                            <th align="center" style="padding-bottom: 8px; color: #777777; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #eaeaea;">Qty</th>
+                            <th align="right" style="padding-bottom: 8px; color: #777777; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #eaeaea;">Price</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${itemsHtml}
+                        </tbody>
+                      </table>
+
+                      <!-- Total amount -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f0f0; border-radius: 4px; padding: 15px;">
+                        <tr>
+                          <td style="font-size: 15px; font-weight: bold; color: #111111;">Total Amount</td>
+                          <td align="right" style="font-size: 17px; font-weight: bold; color: #000000;">$${Number(totalAmount).toFixed(2)}</td>
+                        </tr>
+                      </table>
+
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td align="center" style="background-color: #0a0a0a; padding: 20px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">
+                      &copy; 2026 MDFK CLOTHING CO. Admin Alerts.
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error("Error sending new order alert email:", error);
+    } else {
+      console.log("New order alert email sent successfully to admins. ID:", data?.id);
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Failed to send new order alert email:", error);
   }
 };
