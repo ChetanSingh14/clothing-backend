@@ -2,6 +2,7 @@ import prisma from "../../common/config/prisma.config";
 import ErrorHandler from "../../common/utils/errorHandler";
 import { hashPassword, comparePassword, generateJWTToken } from "./auth.utils";
 import { sendWelcomeEmail } from "../../common/services/email.service";
+import { verifyOtp } from "../../common/services/otp.service";
 
 export const registerService = async (name: string, email: string, password: string) => {
   // Check if user already exists
@@ -110,4 +111,81 @@ export const invalidateTokenService = async (userId: number) => {
   });
 };
 
-export default { registerService, loginService, invalidateTokenService };
+const verifyGoogleIdToken = async (idToken: string) => {
+  try {
+    const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+    if (!res.ok) {
+      throw new ErrorHandler("Invalid Google ID Token", 401);
+    }
+    const payload = (await res.json()) as any;
+    return {
+      email: payload.email,
+      name: payload.name || payload.email.split("@")[0],
+      profileImage: payload.picture || null,
+      emailVerified: payload.email_verified === "true" || payload.email_verified === true
+    };
+  } catch (err: any) {
+    throw new ErrorHandler(err.message || "Failed to verify Google login", 401);
+  }
+};
+
+export const googleLoginService = async (idToken: string) => {
+  const googlePayload = await verifyGoogleIdToken(idToken);
+  
+  if (!googlePayload.emailVerified) {
+    throw new ErrorHandler("Google email is not verified.", 401);
+  }
+
+  let user = await prisma.user.findUnique({
+    where: { email: googlePayload.email },
+  });
+
+  if (!user) {
+    const dummyPasswordHash = await hashPassword(Math.random().toString(36).substring(2, 15));
+    user = await prisma.user.create({
+      data: {
+        name: googlePayload.name,
+        email: googlePayload.email,
+        password: dummyPasswordHash,
+        profileImage: googlePayload.profileImage,
+      },
+    });
+    sendWelcomeEmail(user.email, user.name);
+  }
+
+  const token = generateJWTToken({ id: user.id, email: user.email, role: user.role });
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { token },
+  });
+
+  return {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      fullName: user.fullName,
+      phone: user.phone,
+      address: user.address,
+      landmark: user.landmark,
+      pincode: user.pincode,
+      state: user.state,
+      city: user.city,
+      createdAt: user.createdAt,
+    },
+    token,
+  };
+};
+
+export const registerWithOtpService = async (name: string, email: string, password: string, otp: string, otpToken: string) => {
+  const isOtpValid = verifyOtp(email, otp, otpToken);
+  if (!isOtpValid) {
+    throw new ErrorHandler("Invalid or expired email verification OTP code.", 400);
+  }
+  return registerService(name, email, password);
+};
+
+export default { registerService, loginService, invalidateTokenService, googleLoginService, registerWithOtpService };

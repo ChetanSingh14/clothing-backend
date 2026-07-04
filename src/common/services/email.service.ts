@@ -659,7 +659,7 @@ export const sendNewOrderAlertEmail = async (order: any) => {
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
       to: recipients,
-      subject: `[ALERT] New Booking Created #${orderId} - MDFK Clothing`,
+      subject: `New Booking Created #${orderId} - MDFK Clothing`,
       html: `
         <!DOCTYPE html>
         <html lang="en">
@@ -769,5 +769,46 @@ export const sendNewOrderAlertEmail = async (order: any) => {
     return data;
   } catch (error) {
     console.error("Failed to send new order alert email:", error);
+  }
+};
+
+export const sendOtpEmail = async (email: string, otp: string, reason: string): Promise<void> => {
+  if (!resend) {
+    console.warn("Resend client not initialized. OTP log:", otp, "for", email);
+    return;
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "MDFK Clothing Verification <hello@mdfkclothing.com>",
+      to: email,
+      subject: `Your OTP Code for MDFK Clothing`,
+      html: `
+        <div style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eeeeee; border-radius: 8px;">
+          <h2 style="color: #111111; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 20px;">Verification Code</h2>
+          <p style="font-size: 15px; color: #555555; line-height: 1.6;">
+            We received a request to verify your email for <strong>${reason}</strong>.
+          </p>
+          <div style="background-color: #f6f6f6; border-radius: 6px; padding: 15px; text-align: center; margin: 25px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #111111; font-family: monospace;">${otp}</span>
+          </div>
+          <p style="font-size: 13px; color: #888888; line-height: 1.5; text-align: center;">
+            This OTP code is valid for 10 minutes. If you did not request this, you can safely ignore this email.
+          </p>
+          <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;" />
+          <p style="font-size: 11px; color: #aaaaaa; text-align: center; text-transform: uppercase; letter-spacing: 1px;">
+            MDFK Clothing Co.
+          </p>
+        </div>
+      `
+    });
+
+    if (error) {
+      console.error("Error sending OTP email:", error);
+    } else {
+      console.log(`OTP email sent successfully to ${email}. ID: ${data?.id}`);
+    }
+  } catch (err) {
+    console.error("Failed to send OTP email:", err);
   }
 };

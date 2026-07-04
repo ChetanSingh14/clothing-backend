@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getMyProfile, updateProfile, adminUpdateUser } from "./user.controller";
+import { getMyProfile, updateProfile, adminUpdateUser, requestPhoneOtp, verifyPhoneOtp } from "./user.controller";
 import { authenticateToken, authorizeAdmin } from "../../common/middlewares/auth.middleware";
 import { uploadBase64Image, UploadRequest } from "../../common/middlewares/upload.middleware";
 
@@ -7,6 +7,8 @@ const router = Router();
 
 router.get("/me", authenticateToken(), getMyProfile);
 router.put("/profile", authenticateToken(), updateProfile);
+router.post("/phone-otp", authenticateToken(), requestPhoneOtp);
+router.post("/phone-verify", authenticateToken(), verifyPhoneOtp);
 
 router.post(
   "/upload",
