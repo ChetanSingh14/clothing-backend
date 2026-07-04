@@ -1,5 +1,12 @@
 import prisma from "../../common/config/prisma.config";
 import ErrorHandler from "../../common/utils/errorHandler";
+import { 
+  sendOrderConfirmationEmail, 
+  sendOrderDeliveredEmail, 
+  sendOrderInvoiceEmail 
+} from "../../common/services/email.service";
+
+
 
 export const createOrderService = async (
   userId: number,
@@ -35,6 +42,22 @@ export const createOrderService = async (
     },
   });
 
+  // Retrieve user's email if not provided in order details
+  let email = details?.email;
+  if (!email) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    email = user?.email;
+  }
+
+  // Send Order Confirmation and Invoice Emails asynchronously
+  if (email) {
+    sendOrderConfirmationEmail(email, order);
+    sendOrderInvoiceEmail(email, order);
+  }
+
   return {
     success: true,
     message: "Order placed successfully",
@@ -64,6 +87,21 @@ export const updateOrderStatusService = async (userId: number, orderId: number, 
     where: { id: orderId },
     data: { status },
   });
+
+  // Send Order Delivered Email asynchronously if status changed to DELIVERED
+  if (status === "DELIVERED") {
+    let email = updatedOrder.email;
+    if (!email) {
+      const user = await prisma.user.findUnique({
+        where: { id: updatedOrder.userId },
+        select: { email: true }
+      });
+      email = user?.email || null;
+    }
+    if (email) {
+      sendOrderDeliveredEmail(email, updatedOrder);
+    }
+  }
 
   return { success: true, data: updatedOrder };
 };
@@ -97,6 +135,21 @@ export const updateAdminOrderStatusService = async (orderId: number, status: str
     where: { id: orderId },
     data: { status },
   });
+
+  // Send Order Delivered Email asynchronously if status changed to DELIVERED
+  if (status === "DELIVERED") {
+    let email = updatedOrder.email;
+    if (!email) {
+      const user = await prisma.user.findUnique({
+        where: { id: updatedOrder.userId },
+        select: { email: true }
+      });
+      email = user?.email || null;
+    }
+    if (email) {
+      sendOrderDeliveredEmail(email, updatedOrder);
+    }
+  }
 
   return { success: true, data: updatedOrder };
 };
