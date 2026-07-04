@@ -3,7 +3,6 @@ import cors from "cors";
 import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
 import globalErrorHandler from "./common/middlewares/error.middleware";
 import { authRoutes } from "./app/auth/auth.routes";
 import { userRoutes } from "./app/user/user.routes";
@@ -41,16 +40,6 @@ class ExpressApp {
     this.app.use(express.urlencoded({ extended: true, limit: "10mb" }));
     this.app.use(cookieParser());
     
-    // Rate Limiting
-    // const limiter = rateLimit({
-    //   windowMs: 15 * 60 * 1000, // 15 minutes
-    //   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-    //   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    //   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    //   message: "Too many requests from this IP, please try again after 15 minutes",
-    // });
-    // this.app.use(limiter);
-
     this.setupCORS();
     this.app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
   }

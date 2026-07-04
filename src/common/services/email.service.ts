@@ -8,16 +8,23 @@ dotenv.config();
 // Cache logo base64 string in memory
 let logoBase64 = "";
 try {
-  let logoPath = "/public/uploads/logo_1782819118733.jpeg";
+  let logoPath = "/public/uploads/logo.jpeg";
   if (!fs.existsSync(logoPath)) {
-    logoPath = path.join(process.cwd(), "public/uploads/logo_1782819118733.jpeg");
+    logoPath = path.join(process.cwd(), "public/uploads/logo.jpeg");
   }
   if (!fs.existsSync(logoPath)) {
-    logoPath = path.join(__dirname, "../../../public/uploads/logo_1782819118733.jpeg");
+    logoPath = path.join(process.cwd(), "public/logo.jpeg");
+  }
+  if (!fs.existsSync(logoPath)) {
+    logoPath = path.join(__dirname, "../../../public/uploads/logo.jpeg");
+  }
+  if (!fs.existsSync(logoPath)) {
+    logoPath = path.join(__dirname, "../../../public/logo.jpeg");
   }
   
   if (fs.existsSync(logoPath)) {
     logoBase64 = fs.readFileSync(logoPath).toString("base64");
+    console.log("✅ Email service: Successfully loaded logo image at", logoPath);
   } else {
     console.warn("Logo file not found at path:", logoPath);
   }
@@ -123,7 +130,7 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
     const totalAmount = order.totalAmount || subtotal;
 
     const logoSrc = logoBase64 
-      ? `data:image/png;base64,${logoBase64}` 
+      ? `data:image/jpeg;base64,${logoBase64}` 
       : "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
@@ -283,7 +290,7 @@ export const sendOrderDeliveredEmail = async (email: string, order: any) => {
     const addressDetails = `${order.address || ""}, ${order.landmark ? order.landmark + ", " : ""}${order.city || ""}, ${order.state || ""} - ${order.pincode || ""}`;
 
     const logoSrc = logoBase64 
-      ? `data:image/png;base64,${logoBase64}` 
+      ? `data:image/jpeg;base64,${logoBase64}` 
       : "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
@@ -447,7 +454,7 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
     const subtotalBeforeTax = totalAmount - taxAmount;
 
     const logoSrc = logoBase64 
-      ? `data:image/png;base64,${logoBase64}` 
+      ? `data:image/jpeg;base64,${logoBase64}` 
       : "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
@@ -644,10 +651,10 @@ export const sendNewOrderAlertEmail = async (order: any) => {
     const totalAmount = order.totalAmount || subtotal;
 
     const logoSrc = logoBase64 
-      ? `data:image/png;base64,${logoBase64}` 
+      ? `data:image/jpeg;base64,${logoBase64}` 
       : "https://mdfkclothing.com/logo.png";
 
-    const recipients = ["mdkf.clothing@gmail.com", "siradhanachetan14@gmail.com"];
+    const recipients = ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"];
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
