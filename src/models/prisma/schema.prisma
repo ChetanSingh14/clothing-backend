@@ -94,4 +94,28 @@ model Settings {
   logoUrl     String @default("/logo.jpg")
 }
 
+model Coupon {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique
+  discountAmount Float                    // Flat discount in ₹ (30-40)
+  minOrderAmount Float     @default(499)  // Minimum order value to apply
+  isUsed         Boolean   @default(false)
+  usedByUserId   Int?
+  usedAt         DateTime?
+  expiresAt      DateTime
+  createdAt      DateTime  @default(now())
+
+  @@index([code])
+  @@index([isUsed])
+}
+
+model OfferClaim {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @unique          // One claim per user
+  discountAmount Float                      // ₹30-40 random discount
+  isUsed         Boolean   @default(false)  // Used in an order?
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+}
+
 

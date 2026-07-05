@@ -7,7 +7,7 @@ import { logger } from "../../common/utils/logger.utils";
 export const createOrder = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const userId = req.user?.id;
-    const { totalAmount, items, paymentMethod, details } = req.body;
+    const { totalAmount, items, paymentMethod, details, applyOffer } = req.body;
 
     if (!userId) {
       throw new ErrorHandler("Unauthorized", 401);
@@ -16,8 +16,8 @@ export const createOrder = catchAsyncError(
       throw new ErrorHandler("Total amount and items array are required", 400);
     }
 
-    logger.info(`📦 [Order] Placement attempt by user ID ${userId} for amount $${totalAmount}`);
-    const result = await createOrderService(userId, totalAmount, items, paymentMethod, details);
+    logger.info(`📦 [Order] Placement attempt by user ID ${userId} for amount ₹${totalAmount}${applyOffer ? ' with offer applied' : ''}`);
+    const result = await createOrderService(userId, totalAmount, items, paymentMethod, details, applyOffer);
     res.status(201).json(result);
   }
 );

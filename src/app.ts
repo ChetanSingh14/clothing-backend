@@ -12,6 +12,7 @@ import { wishlistRoutes } from "./app/wishlist/wishlist.routes";
 import { settingsRoutes } from "./app/settings/settings.routes";
 import { chatbotRoutes } from "./app/chatbot/chatbot.routes";
 import { webhooksRoutes } from "./app/webhooks/webhooks.routes";
+import { offerRoutes } from "./app/offer/offer.routes";
 
 class ExpressApp {
   public app: Application;
@@ -110,6 +111,9 @@ class ExpressApp {
 
     // Webhooks routes
     this.app.use("/api/v1/webhooks", webhooksRoutes);
+
+    // QR Scan Offer routes (single QR for all packaging)
+    this.app.use("/api/v1/offer", offerRoutes);
   }
 
   private setupErrorHandling(): void {

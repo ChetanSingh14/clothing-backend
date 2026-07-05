@@ -23,12 +23,43 @@ export const createOrderService = async (
     pincode?: string;
     state?: string;
     city?: string;
-  }
+  },
+  applyOffer?: boolean
 ) => {
+  let finalAmount = Number(totalAmount);
+  let appliedDiscount = 0;
+
+  // If user wants to apply their claimed offer, validate and apply discount
+  if (applyOffer) {
+    const claim = await prisma.offerClaim.findUnique({
+      where: { userId },
+    });
+
+    if (!claim) {
+      throw new ErrorHandler("No offer claimed by this user", 400);
+    }
+
+    if (claim.isUsed) {
+      throw new ErrorHandler("This offer has already been used", 400);
+    }
+
+    appliedDiscount = claim.discountAmount;
+    finalAmount = Math.max(0, finalAmount - appliedDiscount);
+
+    // Mark offer as used
+    await prisma.offerClaim.update({
+      where: { userId },
+      data: {
+        isUsed: true,
+        usedAt: new Date(),
+      },
+    });
+  }
+
   const order = await prisma.order.create({
     data: {
       userId,
-      totalAmount: Number(totalAmount),
+      totalAmount: finalAmount,
       items: items, // JSON array of items
       paymentMethod,
       status: "BOOKED",
@@ -64,8 +95,14 @@ export const createOrderService = async (
 
   return {
     success: true,
-    message: "Order placed successfully",
-    data: order,
+    message: appliedDiscount > 0 
+      ? `Order placed successfully! ₹${appliedDiscount} discount applied with coupon.`
+      : "Order placed successfully",
+    data: {
+      ...order,
+      appliedDiscount,
+      appliedOffer: applyOffer || false,
+    },
   };
 };
 
