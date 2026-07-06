@@ -118,4 +118,15 @@ model OfferClaim {
   createdAt      DateTime  @default(now())
 }
 
+model GalleryImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  createdAt DateTime @default(now())
+}
 
+model CinematicHeroImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  label     String
+  createdAt DateTime @default(now())
+}
