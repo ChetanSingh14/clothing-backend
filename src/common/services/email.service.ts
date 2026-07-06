@@ -32,7 +32,6 @@ try {
   console.error("Failed to read logo image:", err);
 }
 
-
 const resendApiKey = process.env.RESEND_API_KEY;
 
 let resend: Resend | null = null;
@@ -41,6 +40,8 @@ if (resendApiKey) {
 } else {
   console.warn("RESEND_API_KEY is not set. Email service is disabled.");
 }
+
+// ==================== UPDATED LIGHTWEIGHT EMAILS ====================
 
 export const sendWelcomeEmail = async (email: string, name: string) => {
   if (!resend) {
@@ -54,28 +55,37 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
       to: email,
       subject: "Welcome to MDFK Clothing!",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #333;">Welcome to MDFK Clothing, ${name}!</h2>
-          <p style="font-size: 16px; color: #555;">
-            We are thrilled to have you here. Explore our latest collections and find the best fit for your style.
-          </p>
-          <p style="font-size: 16px; color: #555;">
-            If you have any questions, feel free to reply to this email.
-          </p>
-          <br />
-          <p style="font-size: 14px; color: #888;">
-            Best regards,<br />
-            MDFK Clothing Team
-          </p>
-        </div>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head><meta charset="UTF-8"></head>
+        <body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#ffffff;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:30px 0;">
+            <tr>
+              <td align="center">
+                <table role="presentation" width="580" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #222;border-radius:8px;overflow:hidden;">
+                  <tr>
+                    <td align="center" style="padding:40px 30px;">
+                      <h2 style="color:#ffffff;margin:0 0 20px 0;">Welcome to MDFK Clothing, ${name}!</h2>
+                      <p style="font-size:16px;color:#ddd;line-height:1.6;">
+                        We are thrilled to have you here. Explore our latest collections and find the best fit for your style.
+                      </p>
+                      <p style="font-size:16px;color:#ddd;line-height:1.6;margin-top:20px;">
+                        If you have any questions, feel free to reply to this email.
+                      </p>
+                      <p style="margin-top:30px;color:#888;font-size:14px;">Best regards,<br>MDFK Clothing Team</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `,
     });
 
-    if (error) {
-      console.error("Error sending welcome email:", error);
-    } else {
-      console.log("Welcome email sent successfully to", email, "ID:", data?.id);
-    }
+    if (error) console.error("Error sending welcome email:", error);
+    else console.log("Welcome email sent successfully to", email, "ID:", data?.id);
     
     return data;
   } catch (error) {
@@ -92,15 +102,10 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
   try {
     const fullName = order.fullName || "Customer";
     const orderId = order.id;
-    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const paymentMethod = order.paymentMethod || "COD";
+    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const paymentMethod = order.paymentMethod || "CARD";
     const addressDetails = `${order.address || ""}, ${order.landmark ? order.landmark + ", " : ""}${order.city || ""}, ${order.state || ""} - ${order.pincode || ""}`;
 
-    // Calculate items HTML
     let itemsHtml = "";
     let subtotal = 0;
     const itemsList = Array.isArray(order.items) ? order.items : [];
@@ -113,25 +118,18 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
 
       itemsHtml += `
         <tr>
-          <td style="padding: 15px 0; border-bottom: 1px solid #222222; vertical-align: middle;">
-            <div style="font-size: 14px; font-weight: bold; color: #ffffff;">${item.title}</div>
-            <div style="font-size: 12px; color: #888888; margin-top: 4px;">Color: ${item.color || "N/A"} | Size: ${item.size || "N/A"}</div>
+          <td style="padding:10px 0;border-bottom:1px solid #222;">
+            <div style="font-weight:600;color:#fff;">${item.title}</div>
+            <div style="font-size:13px;color:#888;">${item.color || "N/A"} | ${item.size || "N/A"}</div>
           </td>
-          <td align="center" style="padding: 15px 0; border-bottom: 1px solid #222222; font-size: 14px; color: #ffffff; vertical-align: middle;">
-            ${qty}
-          </td>
-          <td align="right" style="padding: 15px 0; border-bottom: 1px solid #222222; font-size: 14px; color: #ffffff; vertical-align: middle; font-weight: bold;">
-            $${totalItemPrice.toFixed(2)}
-          </td>
+          <td align="center" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;">${qty}</td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-weight:600;">$${totalItemPrice.toFixed(2)}</td>
         </tr>
       `;
     }
 
     const totalAmount = order.totalAmount || subtotal;
-
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
+    const logoSrc = logoBase64 ? `data:image/jpeg;base64,${logoBase64}` : "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing <hello@mdfkclothing.com>",
@@ -140,118 +138,56 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
       html: `
         <!DOCTYPE html>
         <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>Order Confirmed</title>
-        </head>
-        <body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 0;">
+        <head><meta charset="UTF-8"><title>Order Confirmed</title></head>
+        <body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#ffffff;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:20px 0;">
             <tr>
               <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#0f0f0f; border:1px solid #222222; padding:40px; text-align: left;">
-                  
-                  <!-- Logo -->
-                  <tr>
-                    <td align="center" style="padding-bottom:30px;">
-                      <img src="${logoSrc}" width="80" style="display:block; max-height:80px;" alt="MDFK Logo" />
-                    </td>
-                  </tr>
-
-                  <!-- Title -->
-                  <tr>
-                    <td align="center" style="padding-bottom: 20px;">
-                      <h1 style="font-size:24px; font-weight:900; letter-spacing: 2px; text-transform: uppercase; margin:0; color:#ffffff;">Order Confirmed</h1>
-                    </td>
-                  </tr>
-
-                  <!-- Message -->
-                  <tr>
-                    <td align="center" style="padding-bottom: 40px; border-bottom: 1px solid #222222;">
-                      <p style="font-size:15px; color:#a0a0a0; line-height:1.6; margin:0;">
-                        Hi ${fullName}, thank you for your order! We've received your details and are getting your items ready for shipment. Below is a summary of your order.
-                      </p>
-                    </td>
-                  </tr>
-
-                  <!-- Details Grid -->
-                  <tr>
-                    <td style="padding: 30px 0; border-bottom: 1px solid #222222;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width: 50%; vertical-align: top; font-size: 14px; color: #888888; line-height: 1.6;">
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Order Date</strong>
-                            ${orderDate}<br/><br/>
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Order Number</strong>
-                            #${orderId}
-                          </td>
-                          <td style="width: 50%; vertical-align: top; font-size: 14px; color: #888888; line-height: 1.6;">
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Payment Method</strong>
-                            ${paymentMethod}<br/><br/>
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Shipping Address</strong>
-                            ${addressDetails}
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Items Section -->
-                  <tr>
-                    <td style="padding-top: 30px;">
-                      <h2 style="font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 20px 0; color: #ffffff;">Items Ordered</h2>
-                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                        <thead>
-                          <tr>
-                            <th align="left" style="padding-bottom: 10px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #222222;">Item</th>
-                            <th align="center" style="padding-bottom: 10px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #222222;">Qty</th>
-                            <th align="right" style="padding-bottom: 10px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #222222;">Price</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          ${itemsHtml}
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Totals -->
-                  <tr>
-                    <td style="padding: 20px 0; background-color: #141414; padding: 20px; border-radius: 4px; border: 1px solid #222222;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="font-size: 14px; color: #888888; padding: 5px 0;">Subtotal</td>
-                          <td align="right" style="font-size: 14px; color: #ffffff; padding: 5px 0;">$${subtotal.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 14px; color: #888888; padding: 5px 0;">Shipping</td>
-                          <td align="right" style="font-size: 14px; color: #ffffff; padding: 5px 0;">Free</td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 16px; font-weight: bold; color: #ffffff; padding: 15px 0 0 0; border-top: 1px solid #222222; margin-top: 10px;">Total</td>
-                          <td align="right" style="font-size: 18px; font-weight: bold; color: #ffffff; padding: 15px 0 0 0; border-top: 1px solid #222222; margin-top: 10px;">$${Number(totalAmount).toFixed(2)}</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Help / Support Footer -->
-                  <tr>
-                    <td align="center" style="padding-top: 40px; padding-bottom: 20px; border-bottom: 1px solid #222222;">
-                      <p style="font-size:13px; color:#888888; line-height:1.6; margin:0;">
-                        If you have any questions, feel free to reply directly to this email or contact support at <a href="mailto:support@mdfkclothing.com" style="color:#ffffff; text-decoration:underline;">support@mdfkclothing.com</a>.
-                      </p>
-                    </td>
-                  </tr>
-
-                  <!-- Footer -->
-                  <tr>
-                    <td align="center" style="padding-top: 30px;">
-                      <p style="font-size:11px; color:#555555; margin:0; text-transform: uppercase; letter-spacing: 1px;">
-                        &copy; 2026 MDFK CLOTHING CO. All rights reserved.
-                      </p>
-                    </td>
-                  </tr>
-
+                <table role="presentation" width="580" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #222;border-radius:8px;overflow:hidden;">
+                  <tr><td align="center" style="padding:25px 0 15px;"><img src="${logoSrc}" width="75" alt="MDFK Logo"/></td></tr>
+                  <tr><td align="center" style="padding:0 30px 20px;"><h1 style="margin:0;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffffff;">ORDER CONFIRMED</h1></td></tr>
+                  <tr><td style="padding:0 30px 25px;border-bottom:1px solid #222;text-align:center;">
+                    <p style="margin:0;font-size:15.5px;color:#ddd;line-height:1.5;">Hi ${fullName}, thank you for your order! We've received your details and are preparing your items for shipment.</p>
+                  </td></tr>
+                  <tr><td style="padding:25px 30px;border-bottom:1px solid #222;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width:50%;padding-right:15px;vertical-align:top;font-size:14px;">
+                          <strong style="color:#888;font-size:12px;text-transform:uppercase;">Order Date</strong><br>${orderDate}<br><br>
+                          <strong style="color:#888;font-size:12px;text-transform:uppercase;">Order Number</strong><br>#${orderId}
+                        </td>
+                        <td style="width:50%;vertical-align:top;font-size:14px;">
+                          <strong style="color:#888;font-size:12px;text-transform:uppercase;">Payment</strong><br>${paymentMethod}<br><br>
+                          <strong style="color:#888;font-size:12px;text-transform:uppercase;">Shipping To</strong><br><span style="line-height:1.45;">${addressDetails}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td></tr>
+                  <tr><td style="padding:25px 30px 15px;">
+                    <h2 style="margin:0 0 12px 0;font-size:15px;text-transform:uppercase;letter-spacing:1px;color:#fff;">Items Ordered</h2>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <thead><tr style="border-bottom:1px solid #333;">
+                        <th align="left" style="padding-bottom:8px;color:#888;font-size:12px;text-transform:uppercase;">Item</th>
+                        <th align="center" style="padding-bottom:8px;color:#888;font-size:12px;text-transform:uppercase;">Qty</th>
+                        <th align="right" style="padding-bottom:8px;color:#888;font-size:12px;text-transform:uppercase;">Price</th>
+                      </tr></thead>
+                      <tbody>${itemsHtml}</tbody>
+                    </table>
+                  </td></tr>
+                  <tr><td style="padding:0 30px 30px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:18px;border-radius:6px;">
+                      <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">$${subtotal.toFixed(2)}</td></tr>
+                      <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">Free</td></tr>
+                      <tr style="border-top:1px solid #333;">
+                        <td style="padding-top:12px;font-size:17px;font-weight:700;">Total</td>
+                        <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">$${Number(totalAmount).toFixed(2)}</td>
+                      </tr>
+                    </table>
+                  </td></tr>
+                  <tr><td align="center" style="padding:20px 30px 30px;border-top:1px solid #222;">
+                    <p style="margin:0;color:#777;font-size:14px;">Any questions? Just reply to this email.</p>
+                    <p style="margin:12px 0 0 0;color:#555;font-size:11px;">© 2026 MDFK CLOTHING CO.</p>
+                  </td></tr>
                 </table>
               </td>
             </tr>
@@ -261,37 +197,24 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
       `,
     });
 
-    if (error) {
-      console.error("Error sending order confirmation email:", error);
-    } else {
-      console.log("Order confirmation email sent successfully to", email, "ID:", data?.id);
-    }
+    if (error) console.error("Error sending order confirmation email:", error);
+    else console.log("Order confirmation email sent successfully to", email);
 
-    return data;
   } catch (error) {
     console.error("Failed to send order confirmation email:", error);
   }
 };
 
 export const sendOrderDeliveredEmail = async (email: string, order: any) => {
-  if (!resend) {
-    console.warn("Resend client not initialized. Skipping order delivered email to:", email);
-    return;
-  }
+  if (!resend) return;
 
   try {
     const fullName = order.fullName || "Customer";
     const orderId = order.id;
-    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
     const addressDetails = `${order.address || ""}, ${order.landmark ? order.landmark + ", " : ""}${order.city || ""}, ${order.state || ""} - ${order.pincode || ""}`;
 
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
+    const logoSrc = logoBase64 ? `data:image/jpeg;base64,${logoBase64}` : "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing <hello@mdfkclothing.com>",
@@ -300,126 +223,63 @@ export const sendOrderDeliveredEmail = async (email: string, order: any) => {
       html: `
         <!DOCTYPE html>
         <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>Order Delivered</title>
-        </head>
-        <body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 0;">
-            <tr>
-              <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#0f0f0f; border:1px solid #222222; padding:40px; text-align: left;">
-                  
-                  <!-- Logo -->
-                  <tr>
-                    <td align="center" style="padding-bottom:30px;">
-                      <img src="${logoSrc}" width="80" style="display:block; max-height:80px;" alt="MDFK Logo" />
-                    </td>
-                  </tr>
-
-                  <!-- Title -->
-                  <tr>
-                    <td align="center" style="padding-bottom: 20px;">
-                      <h1 style="font-size:24px; font-weight:900; letter-spacing: 2px; text-transform: uppercase; margin:0; color:#ffffff;">Order Delivered</h1>
-                    </td>
-                  </tr>
-
-                  <!-- Message -->
-                  <tr>
-                    <td align="center" style="padding-bottom: 40px; border-bottom: 1px solid #222222;">
-                      <p style="font-size:15px; color:#a0a0a0; line-height:1.6; margin:0;">
-                        Hi ${fullName}, your order #${orderId} has been successfully delivered! We hope you love your new gear. Thank you for shopping with us.
-                      </p>
-                    </td>
-                  </tr>
-
-                  <!-- Details Grid -->
-                  <tr>
-                    <td style="padding: 30px 0; border-bottom: 1px solid #222222;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width: 50%; vertical-align: top; font-size: 14px; color: #888888; line-height: 1.6;">
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Order Date</strong>
-                            ${orderDate}<br/><br/>
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Order Number</strong>
-                            #${orderId}
-                          </td>
-                          <td style="width: 50%; vertical-align: top; font-size: 14px; color: #888888; line-height: 1.6;">
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Delivered To</strong>
-                            ${fullName}<br/><br/>
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Delivery Address</strong>
-                            ${addressDetails}
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Call to Action -->
-                  <tr>
-                    <td align="center" style="padding: 40px 0; border-bottom: 1px solid #222222;">
-                      <p style="font-size:14px; color:#888888; margin-bottom:20px;">We value your opinion. Let us know how we did!</p>
-                      <a href="https://mdfkclothing.com/orders" style="background-color:#ffffff; color:#0a0a0a; text-decoration:none; padding:12px 30px; font-size:13px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; border-radius:4px; display:inline-block;">Review Your Items</a>
-                    </td>
-                  </tr>
-
-                  <!-- Help / Support Footer -->
-                  <tr>
-                    <td align="center" style="padding-top: 40px; padding-bottom: 20px; border-bottom: 1px solid #222222;">
-                      <p style="font-size:13px; color:#888888; line-height:1.6; margin:0;">
-                        If you have any questions, feel free to reply directly to this email or contact support at <a href="mailto:support@mdfkclothing.com" style="color:#ffffff; text-decoration:underline;">support@mdfkclothing.com</a>.
-                      </p>
-                    </td>
-                  </tr>
-
-                  <!-- Footer -->
-                  <tr>
-                    <td align="center" style="padding-top: 30px;">
-                      <p style="font-size:11px; color:#555555; margin:0; text-transform: uppercase; letter-spacing: 1px;">
-                        &copy; 2026 MDFK CLOTHING CO. All rights reserved.
-                      </p>
-                    </td>
-                  </tr>
-
-                </table>
-              </td>
-            </tr>
+        <head><meta charset="UTF-8"><title>Order Delivered</title></head>
+        <body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#ffffff;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:20px 0;">
+            <tr><td align="center">
+              <table role="presentation" width="580" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #222;border-radius:8px;overflow:hidden;">
+                <tr><td align="center" style="padding:25px 0 15px;"><img src="${logoSrc}" width="75" alt="MDFK Logo"/></td></tr>
+                <tr><td align="center" style="padding:0 30px 20px;"><h1 style="margin:0;font-size:26px;font-weight:900;letter-spacing:2px;color:#ffffff;">ORDER DELIVERED</h1></td></tr>
+                <tr><td style="padding:0 30px 25px;border-bottom:1px solid #222;text-align:center;">
+                  <p style="margin:0;font-size:15.5px;color:#ddd;line-height:1.5;">Hi ${fullName}, your order #${orderId} has been successfully delivered!<br>We hope you love your new gear.</p>
+                </td></tr>
+                <tr><td style="padding:25px 30px;border-bottom:1px solid #222;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:50%;padding-right:15px;vertical-align:top;font-size:14px;">
+                        <strong style="color:#888;font-size:12px;text-transform:uppercase;">Order Date</strong><br>${orderDate}<br><br>
+                        <strong style="color:#888;font-size:12px;text-transform:uppercase;">Order Number</strong><br>#${orderId}
+                      </td>
+                      <td style="width:50%;vertical-align:top;font-size:14px;">
+                        <strong style="color:#888;font-size:12px;text-transform:uppercase;">Delivered To</strong><br>${fullName}<br><br>
+                        <strong style="color:#888;font-size:12px;text-transform:uppercase;">Address</strong><br><span style="line-height:1.45;">${addressDetails}</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td></tr>
+                <tr><td align="center" style="padding:30px;">
+                  <a href="https://mdfkclothing.com/orders" style="background:#ffffff;color:#0a0a0a;padding:12px 28px;font-weight:600;letter-spacing:1px;border-radius:4px;text-decoration:none;display:inline-block;">VIEW YOUR ORDERS</a>
+                </td></tr>
+                <tr><td align="center" style="padding:20px 30px 30px;border-top:1px solid #222;">
+                  <p style="margin:0;color:#777;font-size:14px;">Thank you for shopping with us!</p>
+                  <p style="margin:12px 0 0 0;color:#555;font-size:11px;">© 2026 MDFK CLOTHING CO.</p>
+                </td></tr>
+              </table>
+            </td></tr>
           </table>
         </body>
         </html>
       `,
     });
 
-    if (error) {
-      console.error("Error sending order delivered email:", error);
-    } else {
-      console.log("Order delivered email sent successfully to", email, "ID:", data?.id);
-    }
+    if (error) console.error("Error:", error);
+    else console.log("✅ Delivered email sent to", email);
 
-    return data;
   } catch (error) {
-    console.error("Failed to send order delivered email:", error);
+    console.error("Failed to send delivered email:", error);
   }
 };
 
 export const sendOrderInvoiceEmail = async (email: string, order: any) => {
-  if (!resend) {
-    console.warn("Resend client not initialized. Skipping order invoice email to:", email);
-    return;
-  }
+  if (!resend) return;
 
   try {
     const fullName = order.fullName || "Customer";
     const orderId = order.id;
-    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const paymentMethod = order.paymentMethod || "COD";
+    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const paymentMethod = order.paymentMethod || "CARD";
     const addressDetails = `${order.address || ""}, ${order.landmark ? order.landmark + ", " : ""}${order.city || ""}, ${order.state || ""} - ${order.pincode || ""}`;
 
-    // Calculate items HTML
     let itemsHtml = "";
     let subtotal = 0;
     const itemsList = Array.isArray(order.items) ? order.items : [];
@@ -432,30 +292,19 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
 
       itemsHtml += `
         <tr>
-          <td style="padding: 12px 0; border-bottom: 1px solid #1a1a1a; vertical-align: top;">
-            <div style="font-size: 13px; font-weight: bold; color: #ffffff;">${item.title}</div>
-            <div style="font-size: 11px; color: #888888; margin-top: 2px;">Color: ${item.color || "N/A"} | Size: ${item.size || "N/A"}</div>
+          <td style="padding:10px 0;border-bottom:1px solid #222;">
+            <div style="font-weight:600;color:#fff;">${item.title}</div>
+            <div style="font-size:13px;color:#888;">${item.color || "N/A"} | ${item.size || "N/A"}</div>
           </td>
-          <td align="center" style="padding: 12px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; color: #ffffff; vertical-align: top;">
-            ${qty}
-          </td>
-          <td align="right" style="padding: 12px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; color: #ffffff; vertical-align: top; font-weight: bold;">
-            $${price.toFixed(2)}
-          </td>
-          <td align="right" style="padding: 12px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; color: #ffffff; vertical-align: top; font-weight: bold;">
-            $${totalItemPrice.toFixed(2)}
-          </td>
+          <td align="center" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;">${qty}</td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;">$${price.toFixed(2)}</td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-weight:600;">$${totalItemPrice.toFixed(2)}</td>
         </tr>
       `;
     }
 
     const totalAmount = order.totalAmount || subtotal;
-    const taxAmount = totalAmount * 0.18; // 18% tax included in total
-    const subtotalBeforeTax = totalAmount - taxAmount;
-
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
+    const logoSrc = logoBase64 ? `data:image/jpeg;base64,${logoBase64}` : "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing <hello@mdfkclothing.com>",
@@ -464,164 +313,87 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
       html: `
         <!DOCTYPE html>
         <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>Tax Invoice</title>
-        </head>
-        <body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 0;">
-            <tr>
-              <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#0f0f0f; border:1px solid #222222; padding:40px; text-align: left;">
-                  
-                  <!-- Logo & Invoice Header -->
-                  <tr>
-                    <td style="padding-bottom:30px; border-bottom: 1px solid #222222;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="vertical-align: middle;">
-                            <img src="${logoSrc}" width="60" style="display:block; max-height:60px;" alt="MDFK Logo" />
-                          </td>
-                          <td align="right" style="vertical-align: middle; color: #ffffff;">
-                            <h1 style="font-size: 20px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0;">TAX INVOICE</h1>
-                            <p style="font-size: 12px; color: #888888; margin: 5px 0 0 0;">Invoice Number: INV-2026-${orderId}</p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Billing Info Grid -->
-                  <tr>
-                    <td style="padding: 30px 0; border-bottom: 1px solid #222222;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width: 50%; vertical-align: top; font-size: 13px; color: #888888; line-height: 1.6;">
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Company Details</strong>
-                            <strong>MDFK CLOTHING CO.</strong><br/>
-                            123 Streetwear Ave,<br/>
-                            Fashion District, NY 10001<br/>
-                            support@mdfkclothing.com
-                          </td>
-                          <td style="width: 50%; vertical-align: top; font-size: 13px; color: #888888; line-height: 1.6;">
-                            <strong style="color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 4px;">Billed To</strong>
-                            <strong>${fullName}</strong><br/>
-                            ${addressDetails}<br/>
-                            Email: ${email}
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Invoice Meta -->
-                  <tr>
-                    <td style="padding: 20px 0; border-bottom: 1px solid #222222; background-color: #141414; padding: 20px; border-radius: 4px; border: 1px solid #222222; margin-top: 20px;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="font-size: 12px; color: #888888;"><strong>Invoice Date:</strong> ${orderDate}</td>
-                          <td style="font-size: 12px; color: #888888;"><strong>Order ID:</strong> #${orderId}</td>
-                          <td style="font-size: 12px; color: #888888;" align="right"><strong>Payment:</strong> ${paymentMethod}</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Line Items -->
-                  <tr>
-                    <td style="padding-top: 30px;">
-                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                        <thead>
-                          <tr>
-                            <th align="left" style="padding-bottom: 10px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #222222;">Item</th>
-                            <th align="center" style="padding-bottom: 10px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #222222;">Qty</th>
-                            <th align="right" style="padding-bottom: 10px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #222222;">Rate</th>
-                            <th align="right" style="padding-bottom: 10px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #222222;">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          ${itemsHtml}
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Totals -->
-                  <tr>
-                    <td style="padding: 20px 0; border-top: 1px solid #222222;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="font-size: 13px; color: #888888; padding: 4px 0;">Subtotal (Before Tax)</td>
-                          <td align="right" style="font-size: 13px; color: #ffffff; padding: 4px 0;">$${subtotalBeforeTax.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 13px; color: #888888; padding: 4px 0;">Tax (GST/VAT 18% Incl.)</td>
-                          <td align="right" style="font-size: 13px; color: #ffffff; padding: 4px 0;">$${taxAmount.toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 13px; color: #888888; padding: 4px 0;">Shipping & Handling</td>
-                          <td align="right" style="font-size: 13px; color: #ffffff; padding: 4px 0;">$0.00</td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 15px; font-weight: bold; color: #ffffff; padding: 15px 0 0 0; border-top: 1px solid #222222; margin-top: 10px;">Total (Paid)</td>
-                          <td align="right" style="font-size: 17px; font-weight: bold; color: #ffffff; padding: 15px 0 0 0; border-top: 1px solid #222222; margin-top: 10px;">$${Number(totalAmount).toFixed(2)}</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Footer -->
-                  <tr>
-                    <td align="center" style="padding-top: 40px; border-top: 1px solid #222222;">
-                      <p style="font-size:11px; color:#555555; margin:0; text-transform: uppercase; letter-spacing: 1px;">
-                        Thank you for your business! &copy; 2026 MDFK CLOTHING CO.
-                      </p>
-                    </td>
-                  </tr>
-
-                </table>
-              </td>
-            </tr>
+        <head><meta charset="UTF-8"><title>Tax Invoice</title></head>
+        <body style="margin:0;padding:0;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#ffffff;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:20px 0;">
+            <tr><td align="center">
+              <table role="presentation" width="580" cellpadding="0" cellspacing="0" style="background:#0f0f0f;border:1px solid #222;border-radius:8px;overflow:hidden;">
+                <tr><td style="padding:20px 30px;border-bottom:1px solid #222;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
+                      <td align="right"><h1 style="margin:0;font-size:22px;font-weight:900;letter-spacing:2px;">TAX INVOICE</h1></td>
+                    </tr>
+                  </table>
+                </td></tr>
+                <tr><td style="padding:25px 30px;border-bottom:1px solid #222;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:50%;padding-right:20px;vertical-align:top;font-size:14px;">
+                        <strong style="color:#888;font-size:12px;text-transform:uppercase;">Billed To</strong><br>${fullName}<br>${addressDetails}
+                      </td>
+                      <td style="width:50%;vertical-align:top;font-size:14px;">
+                        <strong style="color:#888;font-size:12px;text-transform:uppercase;">Invoice Date</strong><br>${orderDate}<br><br>
+                        <strong style="color:#888;font-size:12px;text-transform:uppercase;">Payment</strong><br>${paymentMethod}
+                      </td>
+                    </tr>
+                  </table>
+                </td></tr>
+                <tr><td style="padding:20px 30px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <thead><tr style="border-bottom:1px solid #333;">
+                      <th align="left" style="padding-bottom:8px;color:#888;font-size:12px;text-transform:uppercase;">Item</th>
+                      <th align="center" style="padding-bottom:8px;color:#888;font-size:12px;text-transform:uppercase;">Qty</th>
+                      <th align="right" style="padding-bottom:8px;color:#888;font-size:12px;text-transform:uppercase;">Rate</th>
+                      <th align="right" style="padding-bottom:8px;color:#888;font-size:12px;text-transform:uppercase;">Amount</th>
+                    </tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                  </table>
+                </td></tr>
+                <tr><td style="padding:0 30px 30px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:18px;border-radius:6px;">
+                    <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">$${subtotal.toFixed(2)}</td></tr>
+                    <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">$0.00</td></tr>
+                    <tr style="border-top:1px solid #333;">
+                      <td style="padding-top:12px;font-size:17px;font-weight:700;">Total Paid</td>
+                      <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">$${Number(totalAmount).toFixed(2)}</td>
+                    </tr>
+                  </table>
+                </td></tr>
+                <tr><td align="center" style="padding:20px 30px 30px;border-top:1px solid #222;">
+                  <p style="margin:0;color:#777;font-size:13px;">Thank you for your business!</p>
+                  <p style="margin:10px 0 0 0;color:#555;font-size:11px;">© 2026 MDFK CLOTHING CO.</p>
+                </td></tr>
+              </table>
+            </td></tr>
           </table>
         </body>
         </html>
       `,
     });
 
-    if (error) {
-      console.error("Error sending order invoice email:", error);
-    } else {
-      console.log("Order invoice email sent successfully to", email, "ID:", data?.id);
-    }
+    if (error) console.error("Error:", error);
+    else console.log("✅ Invoice email sent to", email);
 
-    return data;
   } catch (error) {
-    console.error("Failed to send order invoice email:", error);
+    console.error("Failed to send invoice email:", error);
   }
 };
 
 export const sendNewOrderAlertEmail = async (order: any) => {
-  if (!resend) {
-    console.warn("Resend client not initialized. Skipping new order alert email.");
-    return;
-  }
+  if (!resend) return;
 
   try {
     const fullName = order.fullName || "Customer";
     const orderId = order.id;
-    const email = order.email || "No Email Provided";
+    const emailAddr = order.email || "No Email Provided";
     const phone = order.phone || "No Phone Provided";
     const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
+      year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
     });
     const paymentMethod = order.paymentMethod || "COD";
     const addressDetails = `${order.address || ""}, ${order.landmark ? order.landmark + ", " : ""}${order.city || ""}, ${order.state || ""} - ${order.pincode || ""}`;
 
-    // Calculate items HTML
     let itemsHtml = "";
     let subtotal = 0;
     const itemsList = Array.isArray(order.items) ? order.items : [];
@@ -634,139 +406,83 @@ export const sendNewOrderAlertEmail = async (order: any) => {
 
       itemsHtml += `
         <tr>
-          <td style="padding: 12px 0; border-bottom: 1px solid #eeeeee; vertical-align: top;">
-            <div style="font-size: 14px; font-weight: bold; color: #333333;">${item.title}</div>
-            <div style="font-size: 12px; color: #777777; margin-top: 2px;">Color: ${item.color || "N/A"} | Size: ${item.size || "N/A"}</div>
+          <td style="padding:12px 0;border-bottom:1px solid #eee;">
+            <div style="font-weight:600;">${item.title}</div>
+            <div style="font-size:13px;color:#666;">${item.color || "N/A"} | ${item.size || "N/A"}</div>
           </td>
-          <td align="center" style="padding: 12px 0; border-bottom: 1px solid #eeeeee; font-size: 14px; color: #333333; vertical-align: top;">
-            ${qty}
-          </td>
-          <td align="right" style="padding: 12px 0; border-bottom: 1px solid #eeeeee; font-size: 14px; color: #333333; vertical-align: top; font-weight: bold;">
-            $${price.toFixed(2)}
-          </td>
+          <td align="center" style="padding:12px 0;border-bottom:1px solid #eee;">${qty}</td>
+          <td align="right" style="padding:12px 0;border-bottom:1px solid #eee;font-weight:600;">$${price.toFixed(2)}</td>
         </tr>
       `;
     }
 
     const totalAmount = order.totalAmount || subtotal;
-
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
-
-    const recipients = ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"];
+    const logoSrc = logoBase64 ? `data:image/jpeg;base64,${logoBase64}` : "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
-      to: recipients,
+      to: ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"],
       subject: `New Booking Created #${orderId} - MDFK Clothing`,
       html: `
         <!DOCTYPE html>
         <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>New Order Alert</title>
-        </head>
-        <body style="margin:0;padding:0;background-color:#f4f4f4;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333333;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;padding:30px 0;">
-            <tr>
-              <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid #dcdcdc; border-radius: 6px; overflow: hidden; text-align: left;">
-                  
-                  <!-- Header bar -->
-                  <tr>
-                    <td style="background-color:#0a0a0a;padding:20px 25px;">
-                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td valign="middle">
-                            <img src="${logoSrc}" width="60" style="display:block; max-height:60px;" alt="MDFK Logo" />
-                          </td>
-                          <td align="right" valign="middle" style="color: #ffffff; font-size: 16px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;">
-                            New Order Alert
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-
-                  <!-- Notification Body -->
-                  <tr>
-                    <td style="padding: 30px 25px;">
-                      <p style="font-size: 15px; line-height: 1.6; margin: 0 0 20px 0; color: #555555;">
-                        Hello Admin, a new booking has been placed on the store. Below are the order and customer details.
-                      </p>
-
-                      <!-- Detail box -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9f9f9; border:1px solid #eaeaea; border-radius: 4px; padding: 20px; margin-bottom: 30px;">
-                        <tr>
-                          <td style="font-size: 13px; line-height: 1.8; color: #666666;">
-                            <strong style="color:#111111;">Order ID:</strong> #${orderId}<br/>
-                            <strong style="color:#111111;">Date:</strong> ${orderDate}<br/>
-                            <strong style="color:#111111;">Payment Method:</strong> ${paymentMethod}
-                          </td>
-                          <td style="font-size: 13px; line-height: 1.8; color: #666666; padding-left: 20px; vertical-align: top;">
-                            <strong style="color:#111111;">Customer:</strong> ${fullName}<br/>
-                            <strong style="color:#111111;">Email:</strong> ${email}<br/>
-                            <strong style="color:#111111;">Phone:</strong> ${phone}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colspan="2" style="font-size: 13px; line-height: 1.8; color: #666666; pt-15; border-top: 1px solid #eaeaea; margin-top: 15px; padding-top: 15px;">
-                            <strong style="color:#111111;">Delivery Address:</strong><br/>
-                            ${addressDetails}
-                          </td>
-                        </tr>
-                      </table>
-
-                      <!-- Items table -->
-                      <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #111111; margin: 0 0 15px 0; border-bottom: 2px solid #111111; padding-bottom: 5px;">Ordered Items</h3>
-                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                        <thead>
-                          <tr>
-                            <th align="left" style="padding-bottom: 8px; color: #777777; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #eaeaea;">Item</th>
-                            <th align="center" style="padding-bottom: 8px; color: #777777; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #eaeaea;">Qty</th>
-                            <th align="right" style="padding-bottom: 8px; color: #777777; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: normal; border-bottom: 1px solid #eaeaea;">Price</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          ${itemsHtml}
-                        </tbody>
-                      </table>
-
-                      <!-- Total amount -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f0f0; border-radius: 4px; padding: 15px;">
-                        <tr>
-                          <td style="font-size: 15px; font-weight: bold; color: #111111;">Total Amount</td>
-                          <td align="right" style="font-size: 17px; font-weight: bold; color: #000000;">$${Number(totalAmount).toFixed(2)}</td>
-                        </tr>
-                      </table>
-
-                    </td>
-                  </tr>
-
-                  <!-- Footer -->
-                  <tr>
-                    <td align="center" style="background-color: #0a0a0a; padding: 20px; color: #888888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">
-                      &copy; 2026 MDFK CLOTHING CO. Admin Alerts.
-                    </td>
-                  </tr>
-
-                </table>
-              </td>
-            </tr>
+        <head><meta charset="UTF-8"><title>New Order Alert</title></head>
+        <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+            <tr><td align="center">
+              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;">
+                <tr><td style="background:#0a0a0a;padding:20px 25px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
+                      <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">NEW ORDER ALERT</td>
+                    </tr>
+                  </table>
+                </td></tr>
+                <tr><td style="padding:30px 25px;">
+                  <p style="font-size:15px;color:#555;">Hello Admin, a new order has been placed.</p>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:20px;margin:20px 0;">
+                    <tr>
+                      <td style="line-height:1.8;">
+                        <strong>Order ID:</strong> #${orderId}<br>
+                        <strong>Date:</strong> ${orderDate}<br>
+                        <strong>Payment:</strong> ${paymentMethod}
+                      </td>
+                      <td style="line-height:1.8;padding-left:30px;">
+                        <strong>Customer:</strong> ${fullName}<br>
+                        <strong>Email:</strong> ${emailAddr}<br>
+                        <strong>Phone:</strong> ${phone}
+                      </td>
+                    </tr>
+                    <tr><td colspan="2" style="padding-top:15px;border-top:1px solid #eee;margin-top:15px;">
+                      <strong>Address:</strong><br>${addressDetails}
+                    </td></tr>
+                  </table>
+                  <h3 style="margin:20px 0 10px 0;">Items</h3>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                    <thead><tr style="border-bottom:1px solid #ddd;">
+                      <th align="left" style="padding-bottom:8px;color:#666;">Item</th>
+                      <th align="center" style="padding-bottom:8px;color:#666;">Qty</th>
+                      <th align="right" style="padding-bottom:8px;color:#666;">Price</th>
+                    </tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                  </table>
+                  <table width="100%" style="background:#f0f0f0;padding:15px;border-radius:4px;">
+                    <tr><td style="font-weight:bold;">Total Amount</td><td align="right" style="font-size:18px;font-weight:bold;">$${Number(totalAmount).toFixed(2)}</td></tr>
+                  </table>
+                </td></tr>
+                <tr><td align="center" style="background:#0a0a0a;padding:20px;color:#888;font-size:11px;">© 2026 MDFK CLOTHING CO. Admin Alerts</td></tr>
+              </table>
+            </td></tr>
           </table>
         </body>
         </html>
       `,
     });
 
-    if (error) {
-      console.error("Error sending new order alert email:", error);
-    } else {
-      console.log("New order alert email sent successfully to admins. ID:", data?.id);
-    }
+    if (error) console.error("Error:", error);
+    else console.log("New order alert sent. ID:", data?.id);
 
-    return data;
   } catch (error) {
     console.error("Failed to send new order alert email:", error);
   }
@@ -784,30 +500,21 @@ export const sendOtpEmail = async (email: string, otp: string, reason: string): 
       to: email,
       subject: `Your OTP Code for MDFK Clothing`,
       html: `
-        <div style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eeeeee; border-radius: 8px;">
-          <h2 style="color: #111111; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 20px;">Verification Code</h2>
-          <p style="font-size: 15px; color: #555555; line-height: 1.6;">
-            We received a request to verify your email for <strong>${reason}</strong>.
-          </p>
-          <div style="background-color: #f6f6f6; border-radius: 6px; padding: 15px; text-align: center; margin: 25px 0;">
-            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #111111; font-family: monospace;">${otp}</span>
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:500px;margin:20px auto;padding:25px;border:1px solid #eee;border-radius:8px;background:#fff;">
+          <h2 style="text-align:center;color:#111;">Verification Code</h2>
+          <p style="text-align:center;font-size:15px;color:#555;">We received a request to verify your email for <strong>${reason}</strong>.</p>
+          <div style="background:#f6f6f6;padding:20px;margin:25px 0;text-align:center;border-radius:6px;">
+            <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#111;font-family:monospace;">${otp}</span>
           </div>
-          <p style="font-size: 13px; color: #888888; line-height: 1.5; text-align: center;">
-            This OTP code is valid for 10 minutes. If you did not request this, you can safely ignore this email.
-          </p>
-          <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 20px 0;" />
-          <p style="font-size: 11px; color: #aaaaaa; text-align: center; text-transform: uppercase; letter-spacing: 1px;">
-            MDFK Clothing Co.
-          </p>
+          <p style="text-align:center;font-size:13px;color:#888;">This code is valid for 10 minutes.</p>
+          <p style="text-align:center;font-size:11px;color:#aaa;margin-top:25px;">MDFK Clothing Co.</p>
         </div>
       `
     });
 
-    if (error) {
-      console.error("Error sending OTP email:", error);
-    } else {
-      console.log(`OTP email sent successfully to ${email}. ID: ${data?.id}`);
-    }
+    if (error) console.error("Error sending OTP:", error);
+    else console.log(`OTP email sent to ${email}`);
+
   } catch (err) {
     console.error("Failed to send OTP email:", err);
   }
