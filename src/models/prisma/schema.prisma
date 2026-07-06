@@ -73,6 +73,8 @@ model Order {
   pincode       String?
   state         String?
   city          String?
+  delhivery_waybill String?
+  shipment_status   String   @default("pending_pickup")
   createdAt     DateTime @default(now())
 
   @@index([userId])

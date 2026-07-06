@@ -6,6 +6,8 @@ import {
   sendOrderInvoiceEmail,
   sendNewOrderAlertEmail
 } from "../../common/services/email.service";
+import { logger } from "../../common/utils/logger.utils";
+import { generateManifestService, calculateRateService } from "../shipping/shipping.service";
 
 
 
@@ -55,6 +57,34 @@ export const createOrderService = async (
       },
     });
   }
+
+  let shippingFee = 0;
+  let codHandlingCharge = 0;
+
+  if (details?.pincode) {
+    try {
+      let totalQuantity = 0;
+      if (Array.isArray(items)) {
+        totalQuantity = items.reduce((acc: number, item: any) => acc + (Number(item.quantity) || 1), 0);
+      }
+      const weightInGrams = Math.max(280, totalQuantity * 280);
+
+      const rateDetails = await calculateRateService(details.pincode, weightInGrams, finalAmount);
+      shippingFee = rateDetails.shippingFee;
+      
+      if (paymentMethod === "COD") {
+        codHandlingCharge = rateDetails.codHandlingCharge;
+      }
+    } catch (err: any) {
+      logger.warn(`⚠️ [Order Service] Failed to calculate dynamic shipping rate: ${err.message}. Using fallbacks.`);
+      shippingFee = 90;
+      if (paymentMethod === "COD") {
+        codHandlingCharge = 50;
+      }
+    }
+  }
+
+  finalAmount = finalAmount + shippingFee + codHandlingCharge;
 
   const order = await prisma.order.create({
     data: {
@@ -176,6 +206,15 @@ export const updateAdminOrderStatusService = async (orderId: number, status: str
     where: { id: orderId },
     data: { status },
   });
+
+  // Automatically trigger manifest generation if status is updated to SHIPPED
+  if (status === "SHIPPED") {
+    try {
+      await generateManifestService(orderId);
+    } catch (err: any) {
+      logger.error(`[Order Status Update] Automated manifest generation failed for Order #${orderId}: ${err.message}`);
+    }
+  }
 
   // Send Order Delivered Email asynchronously if status changed to DELIVERED
   if (status === "DELIVERED") {

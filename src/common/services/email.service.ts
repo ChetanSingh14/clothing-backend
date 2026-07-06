@@ -812,3 +812,54 @@ export const sendOtpEmail = async (email: string, otp: string, reason: string): 
     console.error("Failed to send OTP email:", err);
   }
 };
+
+export const sendOrderTrackingUpdateEmail = async (email: string, order: any, statusTitle: string, statusDescription: string) => {
+  if (!resend) {
+    console.warn("Resend client not initialized. Skipping order status update email to:", email);
+    return;
+  }
+
+  try {
+    const fullName = order.fullName || "Customer";
+    const orderId = order.id;
+
+    const { data, error } = await resend.emails.send({
+      from: "MDFK Clothing <hello@mdfkclothing.com>",
+      to: email,
+      subject: `Update on Order #${orderId}: ${statusTitle}`,
+      html: `
+        <div style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eeeeee; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <h2 style="color: #111111; text-transform: uppercase; letter-spacing: 2px; font-size: 20px; font-weight: 900; margin: 0;">Order Status Update</h2>
+          </div>
+          <p style="font-size: 15px; color: #555555; line-height: 1.6; margin: 0 0 16px 0;">
+            Hello ${fullName},
+          </p>
+          <p style="font-size: 15px; color: #555555; line-height: 1.6; margin: 0 0 20px 0;">
+            Your order <strong>#${orderId}</strong> has received a new shipping update from our logistics partner:
+          </p>
+          <div style="background-color: #f6f6f6; border-radius: 8px; padding: 20px; text-align: left; margin: 20px 0; border-left: 4px solid #111111;">
+            <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #888888; display: block; margin-bottom: 6px;">Current Status</span>
+            <span style="font-size: 18px; font-weight: bold; color: #111111; display: block;">${statusTitle}</span>
+            ${statusDescription ? `<span style="font-size: 13px; color: #666666; display: block; margin-top: 6px; line-height: 1.4;">${statusDescription}</span>` : ""}
+          </div>
+          <p style="font-size: 14px; color: #888888; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+            You can track your package directly on your dashboard.
+          </p>
+          <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 25px 0;" />
+          <p style="font-size: 11px; color: #aaaaaa; text-align: center; text-transform: uppercase; letter-spacing: 1px; margin: 0;">
+            MDFK Clothing Co.
+          </p>
+        </div>
+      `
+    });
+
+    if (error) {
+      console.error("Error sending order status update email:", error);
+    } else {
+      console.log(`Order status update email sent successfully to ${email}. ID: ${data?.id}`);
+    }
+  } catch (err) {
+    console.error("Failed to send order status update email:", err);
+  }
+};
