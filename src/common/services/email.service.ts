@@ -519,3 +519,37 @@ export const sendOtpEmail = async (email: string, otp: string, reason: string): 
     console.error("Failed to send OTP email:", err);
   }
 };
+
+export const sendContactEmail = async (data: { firstName: string; lastName: string; email: string; message: string }) => {
+  if (!resend) {
+    console.warn("Resend client not initialized. Skipping contact email send to clothing.mdfk@gmail.com");
+    return;
+  }
+
+  try {
+    const { data: resData, error } = await resend.emails.send({
+      from: "MDFK Contact Form <hello@mdfkclothing.com>",
+      to: "clothing.mdfk@gmail.com",
+      subject: `New Contact Form Message from ${data.firstName} ${data.lastName}`,
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:20px auto;padding:25px;border:1px solid #eee;border-radius:8px;background:#fff;color:#333;">
+          <h2 style="color:#111;border-bottom:1px solid #eee;padding-bottom:10px;">New Contact Message Received</h2>
+          <p style="font-size:14px;line-height:1.6;margin:15px 0;">
+            <strong>From:</strong> ${data.firstName} ${data.lastName}<br/>
+            <strong>Email:</strong> <a href="mailto:${data.email}" style="color:#1a73e8;">${data.email}</a>
+          </p>
+          <div style="background:#f9f9f9;padding:20px;margin:20px 0;border-radius:6px;border-left:4px solid #111;">
+            <p style="margin:0;font-size:14px;white-space:pre-wrap;line-height:1.6;">${data.message}</p>
+          </div>
+          <p style="font-size:11px;color:#aaa;margin-top:25px;border-top:1px solid #eee;padding-top:10px;">MDFK Clothing Contact Notification</p>
+        </div>
+      `
+    });
+
+    if (error) console.error("Error sending contact email:", error);
+    else console.log("Contact form email sent successfully to clothing.mdfk@gmail.com, ID:", resData?.id);
+    return resData;
+  } catch (err) {
+    console.error("Failed to send contact form email:", err);
+  }
+};

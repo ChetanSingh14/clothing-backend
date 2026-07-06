@@ -15,6 +15,7 @@ import { webhooksRoutes } from "./app/webhooks/webhooks.routes";
 import { offerRoutes } from "./app/offer/offer.routes";
 import galleryRoutes from "./app/gallery/gallery.routes";
 import cinematicHeroRoutes from "./app/cinematic-hero/cinematic-hero.routes";
+import { contactRoutes } from "./app/contact/contact.routes";
 
 class ExpressApp {
   public app: Application;
@@ -122,6 +123,9 @@ class ExpressApp {
 
     // Cinematic Hero routes
     this.app.use("/api/v1/cinematic-hero", cinematicHeroRoutes);
+
+    // Contact form routes
+    this.app.use("/api/v1/contact", contactRoutes);
   }
 
   private setupErrorHandling(): void {

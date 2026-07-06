@@ -38,6 +38,10 @@ model Product {
   images       String[] // Array of image paths/URLs
   colors       String[] // Array of hex codes or color names
   sizes        String[] // Array of sizes like S, M, L, XL
+  maleColors   String[] @default([])
+  femaleColors String[] @default([])
+  maleSizes    String[] @default([])
+  femaleSizes  String[] @default([])
   rating       Float    @default(5.0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -89,9 +93,10 @@ model Wishlist {
 }
 
 model Settings {
-  id          Int    @id @default(1)
-  companyName String @default("MDFK CLOTHING CO.")
-  logoUrl     String @default("/logo.jpg")
+  id          Int      @id @default(1)
+  companyName String   @default("MDFK CLOTHING CO.")
+  logoUrl     String   @default("/logo.jpg")
+  categories  String[] @default(["T-Shirts", "Couple"])
 }
 
 model Coupon {
