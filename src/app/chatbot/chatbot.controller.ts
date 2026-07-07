@@ -53,10 +53,10 @@ We specialize exclusively in high-quality T-Shirts and Couple Tees (other catego
 Our brand guidelines:
 - Warm cream-colored brand aesthetic.
 - We support Cash on Delivery (COD) as our primary payment method.
-- We offer an easy 5-day return policy on all delivered products.
+- We do not offer returns or refunds. We offer an easy 5-day exchange policy on all delivered products (only for size issues).
 - We have a special Couple Tees section featuring beautifully coordinated matching tees for couples.
 - For any queries, custom support, or questions, users can contact us via email at clothing.mdfk@gmail.com or call/WhatsApp at 9354864420.
-- You can help users find products, answer questions about shipping/returns, and look up order details.
+- You can help users find products, answer questions about shipping/exchanges, and look up order details.
 Keep your answers brief, friendly, and structured using clean markdown bullet points where appropriate.${contextPrompt}`;
  
         // Prepare standard chat structure
@@ -102,7 +102,7 @@ Keep your answers brief, friendly, and structured using clean markdown bullet po
     if (query.includes("hello") || query.includes("hi") || query.includes("hey")) {
       reply = user 
         ? `Hello ${userName}! Welcome to MDFK Clothing Support. How can I help you track your orders, manage your wishlist, or learn about our t-shirts and couple tees today?`
-        : `Hello there! Welcome to MDFK Clothing Support. How can I assist you today? You can ask about our catalog, return policy, or log in to track your orders.`;
+        : `Hello there! Welcome to MDFK Clothing Support. How can I assist you today? You can ask about our catalog, exchange policy, or log in to track your orders.`;
     } else if (query.includes("product") || query.includes("catalog") || query.includes("sell") || query.includes("t-shirt") || query.includes("couple") || query.includes("tee")) {
       reply = `MDFK Clothing offers a premium collection of minimalist clothing. We focus exclusively on:
 - **T-Shirts**: Premium heavy-cotton everyday essentials.
@@ -116,7 +116,7 @@ You can browse our collections on the home page!`;
  
 Our customer service team is always here to assist you!`;
     } else if (query.includes("return") || query.includes("refund") || query.includes("exchange") || query.includes("policy")) {
-      reply = `We want you to love your purchase! MDFK Clothing provides a hassle-free **5-day return policy** on all delivered orders. If you aren't satisfied, you can initiate a return within 5 days of delivery.`;
+      reply = `We want you to have the perfect fit! MDFK Clothing does not offer returns or refunds. However, we provide an easy **5-day size exchange policy** for any size issues. You can file an exchange request directly from your Orders history tab within 5 days of delivery.`;
     } else if (query.includes("payment") || query.includes("pay") || query.includes("cod") || query.includes("cash")) {
       reply = `We support **Cash on Delivery (COD)** for all purchases! You can select Cash on Delivery in the checkout drawer, pay when your parcel is delivered, and enjoy peace of mind.`;
     } else if (query.includes("order") || query.includes("track") || query.includes("booked") || query.includes("status")) {
@@ -141,7 +141,7 @@ Our customer service team is always here to assist you!`;
     } else {
       reply = `I'm here to help you with MDFK Clothing! You can ask me about:
 - Our catalog (**T-Shirts** and **Couple Tees**)
-- Our **5-day return policy**
+- Our **5-day size exchange policy**
 - Placing a **Cash on Delivery (COD)** order
 - Contact details for any queries (**Email**: clothing.mdfk@gmail.com, **Phone**: 9354864420)
 - Tracking your recent orders (please log in to view details)`;

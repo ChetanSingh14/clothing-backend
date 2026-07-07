@@ -77,9 +77,19 @@ model Order {
   pincode       String?
   state         String?
   city          String?
-  createdAt     DateTime @default(now())
-  deliveredAt   DateTime?
-  returnAddress String?
+  createdAt          DateTime  @default(now())
+  deliveredAt        DateTime?
+  returnAddress      String?
+  awbNumber          String?
+  courierName        String?
+  courierId          Int?
+  shippingCharge     Float     @default(0.0)
+  shipmentId         String?
+  returnShipmentId   String?
+  returnAwbNumber    String?
+  returnCourierName  String?
+  shipmozoStatus     String?
+  shipmozoError      String?
 
   @@index([userId])
 }

@@ -23,6 +23,9 @@ export const createOrderService = async (
     pincode?: string;
     state?: string;
     city?: string;
+    courierId?: number;
+    courierName?: string;
+    shippingCharge?: number;
   },
   applyOffer?: boolean
 ) => {
@@ -56,6 +59,10 @@ export const createOrderService = async (
     });
   }
 
+  if (details?.shippingCharge) {
+    finalAmount += Number(details.shippingCharge);
+  }
+
   const order = await prisma.order.create({
     data: {
       userId,
@@ -71,6 +78,9 @@ export const createOrderService = async (
       pincode: details?.pincode,
       state: details?.state,
       city: details?.city,
+      courierId: details?.courierId ? Number(details.courierId) : null,
+      courierName: details?.courierName || null,
+      shippingCharge: details?.shippingCharge ? Number(details.shippingCharge) : 0.0,
     },
   });
 
@@ -124,6 +134,12 @@ export const updateOrderStatusService = async (userId: number, orderId: number, 
     throw new ErrorHandler("Only BOOKED orders can be cancelled", 400);
   }
 
+  // Cancel in Shipmozo if awbNumber exists
+  if (status === "CANCELLED" && order.awbNumber) {
+    const { cancelOrder } = require("../../common/services/shipmozo.service");
+    cancelOrder(order.id).catch((err: any) => console.error("Error cancelling order on Shipmozo:", err));
+  }
+
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
     data: { 
@@ -175,6 +191,12 @@ export const updateAdminOrderStatusService = async (orderId: number, status: str
     throw new ErrorHandler("Order not found", 404);
   }
   
+  // Cancel in Shipmozo if awbNumber exists
+  if (status === "CANCELLED" && order.awbNumber) {
+    const { cancelOrder } = require("../../common/services/shipmozo.service");
+    cancelOrder(order.id).catch((err: any) => console.error("Error cancelling order on Shipmozo:", err));
+  }
+
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
     data: { 
@@ -230,6 +252,10 @@ export const returnOrderService = async (userId: number, orderId: number, return
   // Send return email alert to admins
   const { sendOrderReturnAlertEmail } = require("../../common/services/email.service");
   sendOrderReturnAlertEmail(updatedOrder, returnAddress);
+
+  // Push return to Shipmozo asynchronously
+  const { pushReturn } = require("../../common/services/shipmozo.service");
+  pushReturn(order.id, returnAddress).catch((err: any) => console.error("Failed to push return to Shipmozo:", err));
 
   return { success: true, message: "Return request filed successfully", data: updatedOrder };
 };
