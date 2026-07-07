@@ -42,11 +42,11 @@ export const addProductReview = catchAsyncError(
     if (isNaN(productId)) {
       throw new ErrorHandler("Invalid product ID", 400);
     }
-    if (!userName || !rating || !comment) {
-      throw new ErrorHandler("UserName, rating (1-5), and comment are required", 400);
+    if (!userName || !rating) {
+      throw new ErrorHandler("UserName and rating (1-5) are required", 400);
     }
 
-    const result = await addProductReviewService(productId, userName, Number(rating), comment);
+    const result = await addProductReviewService(productId, userName, Number(rating), comment || "");
     res.status(201).json(result);
   }
 );

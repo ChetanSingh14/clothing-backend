@@ -53,7 +53,7 @@ We specialize exclusively in high-quality T-Shirts and Couple Tees (other catego
 Our brand guidelines:
 - Warm cream-colored brand aesthetic.
 - We support Cash on Delivery (COD) as our primary payment method.
-- We offer an easy 7-day return policy on all delivered products.
+- We offer an easy 5-day return policy on all delivered products.
 - We have a special Couple Tees section featuring beautifully coordinated matching tees for couples.
 - For any queries, custom support, or questions, users can contact us via email at clothing.mdfk@gmail.com or call/WhatsApp at 9354864420.
 - You can help users find products, answer questions about shipping/returns, and look up order details.
@@ -116,7 +116,7 @@ You can browse our collections on the home page!`;
  
 Our customer service team is always here to assist you!`;
     } else if (query.includes("return") || query.includes("refund") || query.includes("exchange") || query.includes("policy")) {
-      reply = `We want you to love your purchase! MDFK Clothing provides a hassle-free **7-day return policy** on all delivered orders. If you aren't satisfied, you can initiate a return within 7 days of delivery.`;
+      reply = `We want you to love your purchase! MDFK Clothing provides a hassle-free **5-day return policy** on all delivered orders. If you aren't satisfied, you can initiate a return within 5 days of delivery.`;
     } else if (query.includes("payment") || query.includes("pay") || query.includes("cod") || query.includes("cash")) {
       reply = `We support **Cash on Delivery (COD)** for all purchases! You can select Cash on Delivery in the checkout drawer, pay when your parcel is delivered, and enjoy peace of mind.`;
     } else if (query.includes("order") || query.includes("track") || query.includes("booked") || query.includes("status")) {
@@ -141,7 +141,7 @@ Our customer service team is always here to assist you!`;
     } else {
       reply = `I'm here to help you with MDFK Clothing! You can ask me about:
 - Our catalog (**T-Shirts** and **Couple Tees**)
-- Our **7-day return policy**
+- Our **5-day return policy**
 - Placing a **Cash on Delivery (COD)** order
 - Contact details for any queries (**Email**: clothing.mdfk@gmail.com, **Phone**: 9354864420)
 - Tracking your recent orders (please log in to view details)`;

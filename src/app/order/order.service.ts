@@ -214,8 +214,8 @@ export const returnOrderService = async (userId: number, orderId: number, return
   if (order.deliveredAt) {
     const diffTime = Math.abs(new Date().getTime() - new Date(order.deliveredAt).getTime());
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    if (diffDays > 7) {
-      throw new ErrorHandler("Returns are only allowed within 7 days of delivery", 400);
+    if (diffDays > 5) {
+      throw new ErrorHandler("Returns are only allowed within 5 days of delivery", 400);
     }
   }
 
