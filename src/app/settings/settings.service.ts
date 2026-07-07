@@ -12,6 +12,7 @@ export const getSettingsService = async () => {
         id: 1,
         companyName: "MDFK CLOTHING CO.",
         logoUrl: "/logo.jpg",
+        categories: ["T-Shirts", "Couple"],
       },
     });
   }
@@ -22,7 +23,7 @@ export const getSettingsService = async () => {
   };
 };
 
-export const updateSettingsService = async (data: { companyName?: string; logoUrl?: string }) => {
+export const updateSettingsService = async (data: { companyName?: string; logoUrl?: string; categories?: string[] }) => {
   const updateData: any = {};
   if (data.companyName !== undefined) {
     updateData.companyName = data.companyName;
@@ -40,6 +41,10 @@ export const updateSettingsService = async (data: { companyName?: string; logoUr
     updateData.logoUrl = data.logoUrl;
   }
 
+  if (data.categories !== undefined) {
+    updateData.categories = data.categories;
+  }
+
   const settings = await prisma.settings.upsert({
     where: { id: 1 },
     update: updateData,
@@ -47,6 +52,7 @@ export const updateSettingsService = async (data: { companyName?: string; logoUr
       id: 1,
       companyName: data.companyName || "MDFK CLOTHING CO.",
       logoUrl: updateData.logoUrl || "/logo.jpg",
+      categories: data.categories || ["T-Shirts", "Couple"],
     },
   });
 

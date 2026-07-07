@@ -13,6 +13,9 @@ import { settingsRoutes } from "./app/settings/settings.routes";
 import { chatbotRoutes } from "./app/chatbot/chatbot.routes";
 import { webhooksRoutes } from "./app/webhooks/webhooks.routes";
 import { offerRoutes } from "./app/offer/offer.routes";
+import galleryRoutes from "./app/gallery/gallery.routes";
+import cinematicHeroRoutes from "./app/cinematic-hero/cinematic-hero.routes";
+import { contactRoutes } from "./app/contact/contact.routes";
 
 class ExpressApp {
   public app: Application;
@@ -114,6 +117,15 @@ class ExpressApp {
 
     // QR Scan Offer routes (single QR for all packaging)
     this.app.use("/api/v1/offer", offerRoutes);
+
+    // Hero Gallery routes
+    this.app.use("/api/v1/gallery", galleryRoutes);
+
+    // Cinematic Hero routes
+    this.app.use("/api/v1/cinematic-hero", cinematicHeroRoutes);
+
+    // Contact form routes
+    this.app.use("/api/v1/contact", contactRoutes);
   }
 
   private setupErrorHandling(): void {

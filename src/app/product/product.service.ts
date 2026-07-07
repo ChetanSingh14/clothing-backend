@@ -92,6 +92,10 @@ export const createProductService = async (data: {
   images: string[];
   colors: string[];
   sizes: string[];
+  maleColors?: string[];
+  femaleColors?: string[];
+  maleSizes?: string[];
+  femaleSizes?: string[];
 }) => {
   const product = await prisma.product.create({
     data: {
@@ -102,6 +106,10 @@ export const createProductService = async (data: {
       images: data.images,
       colors: data.colors,
       sizes: data.sizes,
+      maleColors: data.maleColors || [],
+      femaleColors: data.femaleColors || [],
+      maleSizes: data.maleSizes || [],
+      femaleSizes: data.femaleSizes || [],
     },
   });
 
@@ -122,6 +130,10 @@ export const updateProductService = async (
     images: string[];
     colors: string[];
     sizes: string[];
+    maleColors?: string[];
+    femaleColors?: string[];
+    maleSizes?: string[];
+    femaleSizes?: string[];
   }>
 ) => {
   // Check if exists
