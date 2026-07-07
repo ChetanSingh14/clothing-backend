@@ -569,11 +569,11 @@ export const sendOrderReturnAlertEmail = async (order: any, returnAddress: strin
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
       to: ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"],
-      subject: `Order Return Filed #${orderId} - MDFK Clothing`,
+      subject: `Size Exchange Requested #${orderId} - MDFK Clothing`,
       html: `
         <!DOCTYPE html>
         <html lang="en">
-        <head><meta charset="UTF-8"><title>Order Return Alert</title></head>
+        <head><meta charset="UTF-8"><title>Size Exchange Alert</title></head>
         <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
             <tr><td align="center">
@@ -582,18 +582,18 @@ export const sendOrderReturnAlertEmail = async (order: any, returnAddress: strin
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
-                      <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">RETURN REQUEST FILED</td>
+                      <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">SIZE EXCHANGE REQUESTED</td>
                     </tr>
                   </table>
                 </td></tr>
                 <tr><td style="padding:30px 25px;">
-                  <p style="font-size:15px;color:#555;">Hello Admin, a return request has been filed for Order #${orderId}.</p>
+                  <p style="font-size:15px;color:#555;">Hello Admin, a size exchange request has been filed for Order #${orderId}.</p>
                   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:20px;margin:20px 0;">
                     <tr>
                       <td style="line-height:1.8;vertical-align:top;">
                         <strong>Order ID:</strong> #${orderId}<br>
                         <strong>Order Date:</strong> ${orderDate}<br>
-                        <strong>Return Pickup Address:</strong><br>${returnAddress}
+                        <strong>Pickup & Size Details:</strong><br>${returnAddress}
                       </td>
                       <td style="line-height:1.8;padding-left:30px;vertical-align:top;">
                         <strong>Customer:</strong> ${fullName}<br>
@@ -602,7 +602,7 @@ export const sendOrderReturnAlertEmail = async (order: any, returnAddress: strin
                       </td>
                     </tr>
                   </table>
-                  <h3 style="margin:20px 0 10px 0;">Returned Items</h3>
+                  <h3 style="margin:20px 0 10px 0;">Ordered Items</h3>
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
                     <thead><tr style="border-bottom:1px solid #ddd;">
                       <th align="left" style="padding-bottom:8px;color:#666;">Item</th>
@@ -612,7 +612,7 @@ export const sendOrderReturnAlertEmail = async (order: any, returnAddress: strin
                     <tbody>${itemsHtml}</tbody>
                   </table>
                   <table width="100%" style="background:#f0f0f0;padding:15px;border-radius:4px;">
-                    <tr><td style="font-weight:bold;">Total Amount to Refund</td><td align="right" style="font-size:18px;font-weight:bold;">₹${Number(order.totalAmount).toFixed(2)}</td></tr>
+                    <tr><td style="font-weight:bold;">Original Order Value</td><td align="right" style="font-size:18px;font-weight:bold;">₹${Number(order.totalAmount).toFixed(2)}</td></tr>
                   </table>
                 </td></tr>
                 <tr><td align="center" style="background:#0a0a0a;padding:20px;color:#888;font-size:11px;">© 2026 MDFK CLOTHING CO. Admin Alerts</td></tr>

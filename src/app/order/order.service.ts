@@ -208,14 +208,14 @@ export const returnOrderService = async (userId: number, orderId: number, return
   }
 
   if (order.status !== "DELIVERED") {
-    throw new ErrorHandler("Only delivered orders can be returned", 400);
+    throw new ErrorHandler("Only delivered orders can be exchanged", 400);
   }
 
   if (order.deliveredAt) {
     const diffTime = Math.abs(new Date().getTime() - new Date(order.deliveredAt).getTime());
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
     if (diffDays > 5) {
-      throw new ErrorHandler("Returns are only allowed within 5 days of delivery", 400);
+      throw new ErrorHandler("Exchanges are only allowed within 5 days of delivery", 400);
     }
   }
 
@@ -231,5 +231,5 @@ export const returnOrderService = async (userId: number, orderId: number, return
   const { sendOrderReturnAlertEmail } = require("../../common/services/email.service");
   sendOrderReturnAlertEmail(updatedOrder, returnAddress);
 
-  return { success: true, message: "Return request filed successfully", data: updatedOrder };
+  return { success: true, message: "Exchange request filed successfully", data: updatedOrder };
 };
