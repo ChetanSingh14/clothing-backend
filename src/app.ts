@@ -8,6 +8,7 @@ import { authRoutes } from "./app/auth/auth.routes";
 import { userRoutes } from "./app/user/user.routes";
 import { productRoutes } from "./app/product/product.routes";
 import { orderRoutes } from "./app/order/order.routes";
+import { customOrderRoutes } from "./app/custom-order/custom-order.routes";
 import { wishlistRoutes } from "./app/wishlist/wishlist.routes";
 import { settingsRoutes } from "./app/settings/settings.routes";
 import { chatbotRoutes } from "./app/chatbot/chatbot.routes";
@@ -102,6 +103,9 @@ class ExpressApp {
 
     // Orders checkout routes
     this.app.use("/api/v1/orders", orderRoutes);
+
+    // Custom order routes
+    this.app.use("/api/v1/custom-orders", customOrderRoutes);
 
     // Wishlist toggles routes
     this.app.use("/api/v1/wishlist", wishlistRoutes);
