@@ -534,3 +534,100 @@ export const sendContactEmail = async (data: { firstName: string; lastName: stri
     console.error("Failed to send contact form email:", err);
   }
 };
+
+export const sendOrderReturnAlertEmail = async (order: any, returnAddress: string) => {
+  if (!resend) return;
+
+  try {
+    const fullName = order.fullName || "Customer";
+    const orderId = order.id;
+    const emailAddr = order.email || "No Email Provided";
+    const phone = order.phone || "No Phone Provided";
+    const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
+      year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+    const itemsList = Array.isArray(order.items) ? order.items : [];
+    
+    let itemsHtml = "";
+    for (const item of itemsList) {
+      const price = Number(item.price) || 0;
+      const qty = Number(item.quantity) || 1;
+      itemsHtml += `
+        <tr>
+          <td style="padding:12px 0;border-bottom:1px solid #eee;">
+            <div style="font-weight:600;">${item.title}</div>
+            <div style="font-size:13px;color:#666;">${item.color || "N/A"} | ${item.size || "N/A"}</div>
+          </td>
+          <td align="center" style="padding:12px 0;border-bottom:1px solid #eee;">${qty}</td>
+          <td align="right" style="padding:12px 0;border-bottom:1px solid #eee;font-weight:600;">₹${price.toFixed(2)}</td>
+        </tr>
+      `;
+    }
+
+    const logoSrc = "https://mdfkclothing.com/logo.png";
+
+    const { data, error } = await resend.emails.send({
+      from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
+      to: ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"],
+      subject: `Order Return Filed #${orderId} - MDFK Clothing`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head><meta charset="UTF-8"><title>Order Return Alert</title></head>
+        <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+            <tr><td align="center">
+              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;">
+                <tr><td style="background:#7f1d1d;padding:20px 25px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
+                      <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">RETURN REQUEST FILED</td>
+                    </tr>
+                  </table>
+                </td></tr>
+                <tr><td style="padding:30px 25px;">
+                  <p style="font-size:15px;color:#555;">Hello Admin, a return request has been filed for Order #${orderId}.</p>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:20px;margin:20px 0;">
+                    <tr>
+                      <td style="line-height:1.8;vertical-align:top;">
+                        <strong>Order ID:</strong> #${orderId}<br>
+                        <strong>Order Date:</strong> ${orderDate}<br>
+                        <strong>Return Pickup Address:</strong><br>${returnAddress}
+                      </td>
+                      <td style="line-height:1.8;padding-left:30px;vertical-align:top;">
+                        <strong>Customer:</strong> ${fullName}<br>
+                        <strong>Email:</strong> ${emailAddr}<br>
+                        <strong>Phone:</strong> ${phone}
+                      </td>
+                    </tr>
+                  </table>
+                  <h3 style="margin:20px 0 10px 0;">Returned Items</h3>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                    <thead><tr style="border-bottom:1px solid #ddd;">
+                      <th align="left" style="padding-bottom:8px;color:#666;">Item</th>
+                      <th align="center" style="padding-bottom:8px;color:#666;">Qty</th>
+                      <th align="right" style="padding-bottom:8px;color:#666;">Price</th>
+                    </tr></thead>
+                    <tbody>${itemsHtml}</tbody>
+                  </table>
+                  <table width="100%" style="background:#f0f0f0;padding:15px;border-radius:4px;">
+                    <tr><td style="font-weight:bold;">Total Amount to Refund</td><td align="right" style="font-size:18px;font-weight:bold;">₹${Number(order.totalAmount).toFixed(2)}</td></tr>
+                  </table>
+                </td></tr>
+                <tr><td align="center" style="background:#0a0a0a;padding:20px;color:#888;font-size:11px;">© 2026 MDFK CLOTHING CO. Admin Alerts</td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </body>
+        </html>
+      `
+    });
+
+    if (error) {
+      console.error("Resend API returned error when sending return email:", error);
+    }
+  } catch (error) {
+    console.error("Failed to send return request email:", error);
+  }
+};

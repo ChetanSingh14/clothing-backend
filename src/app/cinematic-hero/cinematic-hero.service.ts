@@ -17,7 +17,8 @@ export const createCinematicHeroImageService = async (data: { url: string, label
 
   if (data.url && data.url.startsWith("data:image")) {
     try {
-      finalUrl = await uploadToCloudinary(data.url, "cinematic-hero");
+      const uploadRes = await uploadToCloudinary(data.url, "cinematic-hero");
+      finalUrl = uploadRes.url;
     } catch (err) {
       console.error("Failed to upload cinematic hero image to Cloudinary:", err);
       throw new Error("Failed to upload image");

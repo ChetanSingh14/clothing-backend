@@ -49,14 +49,16 @@ export const handleChatbotMessage = catchAsyncError(
         const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const systemInstruction = `You are a helpful customer support assistant for MDFK Clothing, a premium clothing brand. 
-We specialize exclusively in high-quality T-Shirts and Hoodies (other categories like coats, sneakers, or sweaters have been removed).
+We specialize exclusively in high-quality T-Shirts and Couple Tees (other categories like hoodies, coats, sneakers, or sweaters have been removed).
 Our brand guidelines:
 - Warm cream-colored brand aesthetic.
 - We support Cash on Delivery (COD) as our primary payment method.
 - We offer an easy 7-day return policy on all delivered products.
+- We have a special Couple Tees section featuring beautifully coordinated matching tees for couples.
+- For any queries, custom support, or questions, users can contact us via email at clothing.mdfk@gmail.com or call/WhatsApp at 9354864420.
 - You can help users find products, answer questions about shipping/returns, and look up order details.
 Keep your answers brief, friendly, and structured using clean markdown bullet points where appropriate.${contextPrompt}`;
-
+ 
         // Prepare standard chat structure
         const chat = model.startChat({
           history: (history || []).map((msg: any) => ({
@@ -67,7 +69,7 @@ Keep your answers brief, friendly, and structured using clean markdown bullet po
             maxOutputTokens: 500,
           },
         });
-
+ 
         // Add the system context instruction at the beginning of chat or inside the message if needed,
         // but systemInstruction is officially supported in gemini-1.5-flash options.
         // We'll pass it to the API.
@@ -75,38 +77,44 @@ Keep your answers brief, friendly, and structured using clean markdown bullet po
           model: "gemini-1.5-flash",
           systemInstruction: systemInstruction
         });
-
+ 
         const chatSession = modelWithSystem.startChat({
           history: (history || []).map((msg: any) => ({
             role: msg.role === "user" ? "user" : "model",
             parts: [{ text: msg.text }],
           }))
         });
-
+ 
         const result = await chatSession.sendMessage(message);
         const responseText = result.response.text();
-
+ 
         res.status(200).json({ success: true, reply: responseText });
         return;
       } catch (err: any) {
         console.error("Gemini API call failed, falling back to mock chatbot:", err);
       }
     }
-
+ 
     // Mock Chatbot Fallback Mode
     const query = message.toLowerCase();
     let reply = "";
-
+ 
     if (query.includes("hello") || query.includes("hi") || query.includes("hey")) {
       reply = user 
-        ? `Hello ${userName}! Welcome to MDFK Clothing Support. How can I help you track your orders, manage your wishlist, or learn about our hoodies and t-shirts today?`
+        ? `Hello ${userName}! Welcome to MDFK Clothing Support. How can I help you track your orders, manage your wishlist, or learn about our t-shirts and couple tees today?`
         : `Hello there! Welcome to MDFK Clothing Support. How can I assist you today? You can ask about our catalog, return policy, or log in to track your orders.`;
-    } else if (query.includes("product") || query.includes("catalog") || query.includes("sell") || query.includes("t-shirt") || query.includes("hoodie")) {
-      reply = `MDFK Clothing offers a premium collection of minimalist clothing. We focus exclusively on two key categories:
+    } else if (query.includes("product") || query.includes("catalog") || query.includes("sell") || query.includes("t-shirt") || query.includes("couple") || query.includes("tee")) {
+      reply = `MDFK Clothing offers a premium collection of minimalist clothing. We focus exclusively on:
 - **T-Shirts**: Premium heavy-cotton everyday essentials.
-- **Hoodies**: Warm, oversized, ultra-soft loungewear.
-
+- **Couple Tees**: Coordinated matching t-shirts for couples with unique graphics.
+ 
 You can browse our collections on the home page!`;
+    } else if (query.includes("contact") || query.includes("support") || query.includes("email") || query.includes("phone") || query.includes("number") || query.includes("query") || query.includes("call")) {
+      reply = `For any queries, custom orders, or support, you can reach out to us at:
+- **Email**: clothing.mdfk@gmail.com
+- **Phone / WhatsApp**: 9354864420
+ 
+Our customer service team is always here to assist you!`;
     } else if (query.includes("return") || query.includes("refund") || query.includes("exchange") || query.includes("policy")) {
       reply = `We want you to love your purchase! MDFK Clothing provides a hassle-free **7-day return policy** on all delivered orders. If you aren't satisfied, you can initiate a return within 7 days of delivery.`;
     } else if (query.includes("payment") || query.includes("pay") || query.includes("cod") || query.includes("cash")) {
@@ -123,7 +131,7 @@ You can browse our collections on the home page!`;
             .map((o) => `* **Order #${o.id}**: $${o.totalAmount} (${o.status}) - Paid via ${o.paymentMethod} on ${o.createdAt.toLocaleDateString()}`)
             .join("\n") + `\n\nYou can cancel any order marked as **BOOKED** directly from your **Orders** dashboard.`;
         } else {
-          reply = `Hi ${userName}, you haven't placed any orders with MDFK Clothing yet. Browse our signature Hoodies and T-Shirts on the homepage to place your first Cash on Delivery order!`;
+          reply = `Hi ${userName}, you haven't placed any orders with MDFK Clothing yet. Browse our signature T-Shirts and Couple Tees on the homepage to place your first Cash on Delivery order!`;
         }
       } else {
         reply = `To track your orders, please click the **Sign In** button at the top right to log into your account. Once logged in, you can view your complete order history under the **Orders** tab.`;
@@ -132,12 +140,13 @@ You can browse our collections on the home page!`;
       reply = `You can save products you love by clicking the Heart icon on any product page. To view and manage your liked items, simply click the Heart icon at the top of the header to open your **Wishlist**!`;
     } else {
       reply = `I'm here to help you with MDFK Clothing! You can ask me about:
-- Our core catalog (**T-Shirts** and **Hoodies**)
+- Our catalog (**T-Shirts** and **Couple Tees**)
 - Our **7-day return policy**
 - Placing a **Cash on Delivery (COD)** order
+- Contact details for any queries (**Email**: clothing.mdfk@gmail.com, **Phone**: 9354864420)
 - Tracking your recent orders (please log in to view details)`;
     }
-
+ 
     res.status(200).json({ success: true, reply });
   }
 );

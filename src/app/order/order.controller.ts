@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../common/middlewares/auth.middleware";
-import { createOrderService, getAdminOrdersService, getMyOrdersService, updateOrderStatusService, updateAdminOrderStatusService } from "./order.service";
+import { createOrderService, getAdminOrdersService, getMyOrdersService, updateOrderStatusService, updateAdminOrderStatusService, returnOrderService } from "./order.service";
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
 
@@ -61,6 +61,20 @@ export const updateAdminOrderStatus = catchAsyncError(
     if (isNaN(orderId) || !status) throw new ErrorHandler("Invalid request data", 400);
     
     const result = await updateAdminOrderStatusService(orderId, status);
+    res.status(200).json(result);
+  }
+);
+
+export const returnOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const userId = req.user?.id;
+    const orderId = Number(req.params.id);
+    const { returnAddress } = req.body;
+
+    if (!userId) throw new ErrorHandler("Unauthorized", 401);
+    if (isNaN(orderId) || !returnAddress) throw new ErrorHandler("Invalid request data", 400);
+
+    const result = await returnOrderService(userId, orderId, returnAddress);
     res.status(200).json(result);
   }
 );

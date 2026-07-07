@@ -126,7 +126,10 @@ export const updateOrderStatusService = async (userId: number, orderId: number, 
 
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
-    data: { status },
+    data: { 
+      status,
+      ...(status === "DELIVERED" ? { deliveredAt: new Date() } : {}),
+    },
   });
 
   // Send Order Delivered Email asynchronously if status changed to DELIVERED
@@ -174,7 +177,10 @@ export const updateAdminOrderStatusService = async (orderId: number, status: str
   
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
-    data: { status },
+    data: { 
+      status,
+      ...(status === "DELIVERED" ? { deliveredAt: new Date() } : {}),
+    },
   });
 
   // Send Order Delivered Email asynchronously if status changed to DELIVERED
@@ -193,4 +199,37 @@ export const updateAdminOrderStatusService = async (orderId: number, status: str
   }
 
   return { success: true, data: updatedOrder };
+};
+
+export const returnOrderService = async (userId: number, orderId: number, returnAddress: string) => {
+  const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
+  if (!order) {
+    throw new ErrorHandler("Order not found or unauthorized", 404);
+  }
+
+  if (order.status !== "DELIVERED") {
+    throw new ErrorHandler("Only delivered orders can be returned", 400);
+  }
+
+  if (order.deliveredAt) {
+    const diffTime = Math.abs(new Date().getTime() - new Date(order.deliveredAt).getTime());
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    if (diffDays > 7) {
+      throw new ErrorHandler("Returns are only allowed within 7 days of delivery", 400);
+    }
+  }
+
+  const updatedOrder = await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: "RETURN_PENDING",
+      returnAddress,
+    },
+  });
+
+  // Send return email alert to admins
+  const { sendOrderReturnAlertEmail } = require("../../common/services/email.service");
+  sendOrderReturnAlertEmail(updatedOrder, returnAddress);
+
+  return { success: true, message: "Return request filed successfully", data: updatedOrder };
 };

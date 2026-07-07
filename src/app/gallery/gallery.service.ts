@@ -17,7 +17,8 @@ export const createGalleryImageService = async (data: { url: string }) => {
 
   if (data.url && data.url.startsWith("data:image")) {
     try {
-      finalUrl = await uploadToCloudinary(data.url, "gallery");
+      const uploadRes = await uploadToCloudinary(data.url, "gallery");
+      finalUrl = uploadRes.url;
     } catch (err) {
       console.error("Failed to upload gallery image to Cloudinary:", err);
       throw new Error("Failed to upload image");
