@@ -41,6 +41,7 @@ router.post(
       success: true,
       message: "Image uploaded successfully",
       url: req.fileUrl,
+      optimizedUrl: req.optimizedUrl,
     });
   }
 );

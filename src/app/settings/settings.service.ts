@@ -31,8 +31,8 @@ export const updateSettingsService = async (data: { companyName?: string; logoUr
   // Handle base64 logo image upload if present
   if (data.logoUrl && data.logoUrl.startsWith("data:image")) {
     try {
-      const fileUrl = await uploadToCloudinary(data.logoUrl, "settings");
-      updateData.logoUrl = fileUrl;
+      const { url } = await uploadToCloudinary(data.logoUrl, "settings");
+      updateData.logoUrl = url;
     } catch (err) {
       console.error("Failed to upload logo to Cloudinary:", err);
     }

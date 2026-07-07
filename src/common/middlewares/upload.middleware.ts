@@ -6,6 +6,7 @@ import { uploadToCloudinary } from "../utils/cloudinary.utils";
 export interface UploadRequest extends Request {
   fileUrl?: string;
   fileName?: string;
+  optimizedUrl?: string;
 }
 
 export const uploadBase64Image = async (
@@ -19,8 +20,9 @@ export const uploadBase64Image = async (
       return next(new ErrorHandler("No image data provided. Expected base64 string.", 400));
     }
 
-    const fileUrl = await uploadToCloudinary(image, "products");
-    req.fileUrl = fileUrl;
+    const { url, optimizedUrl } = await uploadToCloudinary(image, "products");
+    req.fileUrl = url;
+    req.optimizedUrl = optimizedUrl;
 
     next();
   } catch (error) {

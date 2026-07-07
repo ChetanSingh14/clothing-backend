@@ -1,36 +1,9 @@
 import { Resend } from "resend";
 import dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
+
 
 dotenv.config();
 
-// Cache logo base64 string in memory
-let logoBase64 = "";
-try {
-  let logoPath = "/public/uploads/logo.jpeg";
-  if (!fs.existsSync(logoPath)) {
-    logoPath = path.join(process.cwd(), "public/uploads/logo.jpeg");
-  }
-  if (!fs.existsSync(logoPath)) {
-    logoPath = path.join(process.cwd(), "public/logo.jpeg");
-  }
-  if (!fs.existsSync(logoPath)) {
-    logoPath = path.join(__dirname, "../../../public/uploads/logo.jpeg");
-  }
-  if (!fs.existsSync(logoPath)) {
-    logoPath = path.join(__dirname, "../../../public/logo.jpeg");
-  }
-  
-  if (fs.existsSync(logoPath)) {
-    logoBase64 = fs.readFileSync(logoPath).toString("base64");
-    console.log("✅ Email service: Successfully loaded logo image at", logoPath);
-  } else {
-    console.warn("Logo file not found at path:", logoPath);
-  }
-} catch (err) {
-  console.error("Failed to read logo image:", err);
-}
 
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -129,9 +102,7 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
 
     const totalAmount = order.totalAmount || subtotal;
 
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
+    const logoSrc = "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing <hello@mdfkclothing.com>",
@@ -289,9 +260,7 @@ export const sendOrderDeliveredEmail = async (email: string, order: any) => {
     });
     const addressDetails = `${order.address || ""}, ${order.landmark ? order.landmark + ", " : ""}${order.city || ""}, ${order.state || ""} - ${order.pincode || ""}`;
 
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
+    const logoSrc = "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing <hello@mdfkclothing.com>",
@@ -453,9 +422,7 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
     const taxAmount = totalAmount * 0.18; // 18% tax included in total
     const subtotalBeforeTax = totalAmount - taxAmount;
 
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
+    const logoSrc = "https://mdfkclothing.com/logo.png";
 
     const { data, error } = await resend.emails.send({
       from: "MDFK Clothing <hello@mdfkclothing.com>",
@@ -650,9 +617,7 @@ export const sendNewOrderAlertEmail = async (order: any) => {
 
     const totalAmount = order.totalAmount || subtotal;
 
-    const logoSrc = logoBase64 
-      ? `data:image/jpeg;base64,${logoBase64}` 
-      : "https://mdfkclothing.com/logo.png";
+    const logoSrc = "https://mdfkclothing.com/logo.png";
 
     const recipients = ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"];
 
