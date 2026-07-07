@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config(); // trigger restart
+
 
 import { createServer } from "http";
 import app from "./app";

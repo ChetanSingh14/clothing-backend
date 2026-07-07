@@ -80,6 +80,10 @@ model Order {
   createdAt     DateTime @default(now())
   deliveredAt   DateTime?
   returnAddress String?
+  nimbuspostAwb        String?
+  nimbuspostShipmentId String?
+  nimbuspostOrderId    String?
+  nimbuspostLabel      String?
 
   @@index([userId])
 }
