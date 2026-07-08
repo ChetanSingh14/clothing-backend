@@ -72,6 +72,34 @@ class NimbuspostService {
       const packageWeight = SHIRT_WEIGHT_G * totalQty;
       const packageHeight = SHIRT_HEIGHT_CM * totalQty;
       
+      if (!order.fullName) throw new ErrorHandler("Consignee name is required", 400);
+      if (!order.address) throw new ErrorHandler("Consignee address is required", 400);
+      if (!order.pincode) throw new ErrorHandler("Consignee pincode is required", 400);
+      if (!order.phone) throw new ErrorHandler("Consignee phone number is required", 400);
+
+      const warehouseName = process.env.NIMBUSPOST_WAREHOUSE_NAME;
+      const warehouseAddress = process.env.NIMBUSPOST_WAREHOUSE_ADDRESS;
+      const warehouseCity = process.env.NIMBUSPOST_WAREHOUSE_CITY;
+      const warehouseState = process.env.NIMBUSPOST_WAREHOUSE_STATE;
+      const warehousePincode = process.env.NIMBUSPOST_WAREHOUSE_PINCODE;
+      const warehousePhone = process.env.NIMBUSPOST_WAREHOUSE_PHONE;
+
+      if (!warehouseName || !warehouseAddress || !warehouseCity || !warehouseState || !warehousePincode || !warehousePhone) {
+        throw new ErrorHandler("Nimbuspost warehouse configuration is incomplete", 500);
+      }
+
+      const orderItems = items.map((item: any) => {
+        if (!item.title) throw new ErrorHandler("Item title is required", 400);
+        if (!item.quantity) throw new ErrorHandler("Item quantity is required", 400);
+        if (!item.price) throw new ErrorHandler("Item price is required", 400);
+        return {
+          name: item.title,
+          qty: item.quantity,
+          price: item.price,
+          sku: `SKU-${item.id || 'GENERIC'}`
+        };
+      });
+
       const payload: any = {
         order_number: `#${order.id}`,
         shipping_charges: 0,
@@ -84,30 +112,25 @@ class NimbuspostService {
         package_breadth: SHIRT_BREADTH_CM,
         package_height: packageHeight,
         consignee: {
-          name: order.fullName || "Customer Name",
-          address: order.address || "No Address Provided",
+          name: order.fullName,
+          address: order.address,
           address_2: order.landmark || "",
           city: order.city || "",
           state: order.state || "",
-          pincode: order.pincode || "110001",
-          phone: order.phone || "9999999999"
+          pincode: order.pincode,
+          phone: order.phone
         },
         pickup: {
-          warehouse_name: process.env.NIMBUSPOST_WAREHOUSE_NAME || "warehouse 1",
+          warehouse_name: warehouseName,
           name: "MDFK Clothing",
-          address: process.env.NIMBUSPOST_WAREHOUSE_ADDRESS || "Warehouse Address",
+          address: warehouseAddress,
           address_2: "",
-          city: process.env.NIMBUSPOST_WAREHOUSE_CITY || "Delhi",
-          state: process.env.NIMBUSPOST_WAREHOUSE_STATE || "Delhi",
-          pincode: process.env.NIMBUSPOST_WAREHOUSE_PINCODE || "110001",
-          phone: process.env.NIMBUSPOST_WAREHOUSE_PHONE || "9999999999"
+          city: warehouseCity,
+          state: warehouseState,
+          pincode: warehousePincode,
+          phone: warehousePhone
         },
-        order_items: items.map((item: any) => ({
-          name: item.title || "Product",
-          qty: item.quantity || "1",
-          price: item.price || "0",
-          sku: `SKU-${item.id || 'GENERIC'}`
-        }))
+        order_items: orderItems
       };
 
       console.log(`[NimbusPost Ship] Package: ${totalQty} items, ${packageWeight}g, ${SHIRT_LENGTH_CM}x${SHIRT_BREADTH_CM}x${packageHeight}cm`);
@@ -119,14 +142,20 @@ class NimbuspostService {
       } else {
         // No stored courier — run a quick serviceability check to pick one
         console.log(`[NimbusPost Ship] No stored courier_id. Running serviceability to find one...`);
+        if (!order.paymentMethod) throw new ErrorHandler("Order payment method is required", 400);
+        if (!order.totalAmount) throw new ErrorHandler("Order total amount is required", 400);
+
         const rates = await this.calculateShippingRate(
-          order.pincode || "110001",
-          order.paymentMethod || "COD",
-          order.totalAmount || 1000
+          order.pincode,
+          order.paymentMethod,
+          Number(order.totalAmount),
+          totalQty
         );
         if (rates.courierId) {
           payload.courier_id = Number(rates.courierId);
           console.log(`[NimbusPost Ship] Resolved courier_id from serviceability: ${payload.courier_id}`);
+        } else {
+          throw new ErrorHandler("Failed to resolve courier ID for shipment", 400);
         }
       }
 
@@ -148,9 +177,9 @@ class NimbuspostService {
       if (error.response && error.response.status === 401) {
           // Token expired, retry once
           this.token = null;
-          // Could retry here, but throwing for now
       }
       logger.error(`Nimbuspost Create Shipment Error: ${error.message}`);
+      if (error instanceof ErrorHandler) throw error;
       throw new ErrorHandler(error.response?.data?.message || error.message || "Failed to create shipment", 500);
     }
   }
@@ -206,13 +235,17 @@ class NimbuspostService {
       const email = process.env.NIMBUSPOST_EMAIL;
       const password = process.env.NIMBUSPOST_PASSWORD;
       if (!email || !password) {
-        console.log(`[NimbusPost Calculate] Credentials not configured. Using fallback charges. Pincode: ${deliveryPincode}`);
-        return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50, courierId: null };
+        throw new ErrorHandler("Nimbuspost credentials not configured", 500);
+      }
+
+      const originPincode = process.env.NIMBUSPOST_WAREHOUSE_PINCODE;
+      if (!originPincode) {
+        throw new ErrorHandler("Nimbuspost warehouse pincode is not configured", 500);
       }
 
       const headers = await this.getAuthHeaders();
       const payload = {
-        origin: process.env.NIMBUSPOST_WAREHOUSE_PINCODE || "110001",
+        origin: originPincode,
         destination: deliveryPincode,
         package_weight: packageWeight,
         package_length: SHIRT_LENGTH_CM,
@@ -275,18 +308,15 @@ class NimbuspostService {
             console.log(`[NimbusPost Calculate] Selected Cheapest Option: ${cheapestCourier.name} (ID: ${cheapestCourier.courierId}, Shipping: ₹${cheapestCourier.shippingFee}, COD: ₹${cheapestCourier.codFee}, RTO: ₹${cheapestCourier.rtoFee}, Eval Total: ₹${cheapestTotal})`);
             return { shippingFee: cheapestCourier.shippingFee, codFee: cheapestCourier.codFee, rtoFee: cheapestCourier.rtoFee, courierId: cheapestCourier.courierId };
           }
-        } else {
-          console.log(`[NimbusPost Calculate] No courier partners returned in API data.`);
         }
+        throw new ErrorHandler("No shipping services available for this pincode", 400);
       } else {
-        console.log(`[NimbusPost Calculate] API request failed or returned false status. Response:`, response?.data);
+        throw new ErrorHandler(response.data?.message || "Failed to calculate shipping rates", 400);
       }
-      
-      console.log(`[NimbusPost Calculate] Using fallback charges (₹50 Shipping, ${paymentMethod === "COD" ? "₹50" : "₹0"} COD, ₹50 RTO)`);
-      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50, courierId: null };
     } catch (error: any) {
-      console.log(`[NimbusPost Calculate Error] Failed to calculate rate: ${error.message}. Using fallbacks.`);
-      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50, courierId: null };
+      logger.error(`[NimbusPost Calculate Error] Failed to calculate rate: ${error.message}`);
+      if (error instanceof ErrorHandler) throw error;
+      throw new ErrorHandler(error.response?.data?.message || error.message || "Failed to calculate shipping rate", error.response?.status || 500);
     }
   }
 }

@@ -157,8 +157,16 @@ export const calculateShipping = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const { pincode, paymentMethod, orderAmount, totalQuantity } = req.body;
     if (!pincode) throw new ErrorHandler("Pincode is required", 400);
+    if (!paymentMethod) throw new ErrorHandler("Payment method is required", 400);
+    if (!orderAmount) throw new ErrorHandler("Order amount is required", 400);
+    if (!totalQuantity) throw new ErrorHandler("Total quantity is required", 400);
 
-    const { shippingFee, codFee, rtoFee, courierId } = await nimbuspostService.calculateShippingRate(pincode, paymentMethod || "COD", Number(orderAmount || 1000), Number(totalQuantity || 1));
+    const { shippingFee, codFee, rtoFee, courierId } = await nimbuspostService.calculateShippingRate(
+      pincode,
+      paymentMethod,
+      Number(orderAmount),
+      Number(totalQuantity)
+    );
     res.status(200).json({ success: true, shippingFee, codFee, rtoFee, courierId });
   }
 );
