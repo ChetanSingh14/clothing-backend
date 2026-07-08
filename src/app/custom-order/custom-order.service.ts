@@ -8,11 +8,14 @@ export const createCustomOrder = async (data: any) => {
   let finalImageUrl = data.designImageUrl;
 
   if (finalImageUrl) {
-    const imagesArray = Array.isArray(finalImageUrl)
-      ? finalImageUrl
-      : typeof finalImageUrl === "string"
-      ? finalImageUrl.split(",").filter(Boolean)
-      : [];
+    let imagesArray: string[] = [];
+    if (Array.isArray(finalImageUrl)) {
+      imagesArray = finalImageUrl;
+    } else if (typeof finalImageUrl === "string") {
+      // Split only on commas that are followed by "data:image" or "http"
+      // to avoid breaking individual base64 data URLs which contain a comma.
+      imagesArray = finalImageUrl.split(/,(?=\s*(?:data:image|http))/).filter(Boolean);
+    }
 
     const uploadedUrls = [];
     for (const img of imagesArray) {
