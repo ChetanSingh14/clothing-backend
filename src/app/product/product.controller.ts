@@ -53,7 +53,19 @@ export const addProductReview = catchAsyncError(
 
 export const createProduct = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { title, description, price, category, images, colors, sizes } = req.body;
+    const { 
+      title, 
+      description, 
+      price, 
+      category, 
+      images, 
+      colors, 
+      sizes,
+      maleColors,
+      femaleColors,
+      maleSizes,
+      femaleSizes
+    } = req.body;
 
     if (!title || !description || price === undefined || !category) {
       throw new ErrorHandler("Title, description, price, and category are required", 400);
@@ -69,6 +81,10 @@ export const createProduct = catchAsyncError(
       images: Array.isArray(images) ? images : [],
       colors: Array.isArray(colors) ? colors : [],
       sizes: Array.isArray(sizes) ? sizes : [],
+      maleColors: Array.isArray(maleColors) ? maleColors : [],
+      femaleColors: Array.isArray(femaleColors) ? femaleColors : [],
+      maleSizes: Array.isArray(maleSizes) ? maleSizes : [],
+      femaleSizes: Array.isArray(femaleSizes) ? femaleSizes : [],
     });
 
     res.status(201).json(result);
