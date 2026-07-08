@@ -118,7 +118,11 @@ export const nimbusCancelOrder = catchAsyncError(
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order || !order.nimbuspostAwb) throw new ErrorHandler("Order not found or no AWB associated", 404);
 
-    await nimbuspostService.cancelShipment(order.nimbuspostAwb);
+    try {
+      await nimbuspostService.cancelShipment(order.nimbuspostAwb);
+    } catch (error: any) {
+      logger.warn(`[NimbusPost Cancel] Shipment cancel failed for AWB ${order.nimbuspostAwb}: ${error.message}. Proceeding with database cancellation.`);
+    }
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },

@@ -6,6 +6,7 @@ import {
   sendOrderInvoiceEmail,
   sendNewOrderAlertEmail
 } from "../../common/services/email.service";
+import nimbuspostService from "../../common/services/nimbuspost.service";
 
 
 
@@ -183,6 +184,14 @@ export const updateAdminOrderStatusService = async (orderId: number, status: str
     throw new ErrorHandler("Order not found", 404);
   }
   
+  if (status === "CANCELLED" && order.nimbuspostAwb) {
+    try {
+      await nimbuspostService.cancelShipment(order.nimbuspostAwb);
+    } catch (error: any) {
+      console.warn(`[NimbusPost Cancel] Failed to cancel shipment for AWB ${order.nimbuspostAwb} during admin status update: ${error.message}`);
+    }
+  }
+
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
     data: { 
