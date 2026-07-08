@@ -24,7 +24,10 @@ export const createOrderService = async (
     state?: string;
     city?: string;
   },
-  applyOffer?: boolean
+  applyOffer?: boolean,
+  shippingCharges: number = 0,
+  codCharges: number = 0,
+  rtoCharges: number = 0
 ) => {
   let finalAmount = Number(totalAmount);
   let appliedDiscount = 0;
@@ -59,7 +62,10 @@ export const createOrderService = async (
   const order = await prisma.order.create({
     data: {
       userId,
-      totalAmount: finalAmount,
+      totalAmount: finalAmount + Number(shippingCharges) + Number(codCharges),
+      shippingCharges: Number(shippingCharges),
+      codCharges: Number(codCharges),
+      rtoCharges: Number(rtoCharges),
       items: items, // JSON array of items
       paymentMethod,
       status: "BOOKED",

@@ -67,6 +67,9 @@ model Order {
   userId        Int
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   totalAmount   Float
+  shippingCharges Float    @default(0)
+  codCharges      Float    @default(0)
+  rtoCharges      Float    @default(0)
   items         Json     // Array of bought items with quantity, color, size, title, price
   status        String   @default("BOOKED") // BOOKED, DELIVERED, CANCELLED
   paymentMethod String   @default("COD")

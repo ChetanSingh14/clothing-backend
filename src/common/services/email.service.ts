@@ -103,6 +103,8 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
     }
 
     const totalAmount = order.totalAmount || subtotal;
+    const shipping = order.shippingCharges ?? 0;
+    const cod = order.codCharges ?? 0;
 
     const logoSrc = "https://mdfkclothing.com/logo.png";
 
@@ -152,7 +154,8 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
                   <tr><td style="padding:0 30px 30px;">
                     <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:18px;border-radius:6px;">
                       <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">$${subtotal.toFixed(2)}</td></tr>
-                      <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">Free</td></tr>
+                      <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">${shipping > 0 ? `$${shipping.toFixed(2)}` : "Free"}</td></tr>
+                      ${cod > 0 ? `<tr><td style="color:#aaa;">COD Charges</td><td align="right" style="color:#fff;">$${cod.toFixed(2)}</td></tr>` : ""}
                       <tr style="border-top:1px solid #333;">
                         <td style="padding-top:12px;font-size:17px;font-weight:700;">Total</td>
                         <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">$${Number(totalAmount).toFixed(2)}</td>
@@ -279,6 +282,8 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
     }
 
     const totalAmount = order.totalAmount || subtotal;
+    const shipping = order.shippingCharges ?? 0;
+    const cod = order.codCharges ?? 0;
     const taxAmount = totalAmount * 0.18; // 18% tax included in total
     const subtotalBeforeTax = totalAmount - taxAmount;
 
@@ -331,7 +336,8 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
                 <tr><td style="padding:0 30px 30px;">
                   <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:18px;border-radius:6px;">
                     <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">$${subtotal.toFixed(2)}</td></tr>
-                    <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">$0.00</td></tr>
+                    <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">${shipping > 0 ? `$${shipping.toFixed(2)}` : "$0.00"}</td></tr>
+                    ${cod > 0 ? `<tr><td style="color:#aaa;">COD Charges</td><td align="right" style="color:#fff;">$${cod.toFixed(2)}</td></tr>` : ""}
                     <tr style="border-top:1px solid #333;">
                       <td style="padding-top:12px;font-size:17px;font-weight:700;">Total Paid</td>
                       <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">$${Number(totalAmount).toFixed(2)}</td>

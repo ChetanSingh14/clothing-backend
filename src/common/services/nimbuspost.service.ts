@@ -161,6 +161,88 @@ class NimbuspostService {
       throw new ErrorHandler(error.response?.data?.message || "Unable to cancel", 500);
     }
   }
+  public async calculateShippingRate(deliveryPincode: string, paymentMethod: string, orderAmount: number = 1000): Promise<{ shippingFee: number, codFee: number, rtoFee: number }> {
+    try {
+      const email = process.env.NIMBUSPOST_EMAIL;
+      const password = process.env.NIMBUSPOST_PASSWORD;
+      if (!email || !password) {
+        console.log(`[NimbusPost Calculate] Credentials not configured. Using fallback charges. Pincode: ${deliveryPincode}`);
+        return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50 };
+      }
+
+      const headers = await this.getAuthHeaders();
+      const payload = {
+        origin: process.env.NIMBUSPOST_WAREHOUSE_PINCODE || "110001",
+        destination: deliveryPincode,
+        package_weight: 500,
+        payment_type: paymentMethod === "COD" ? "cod" : "prepaid",
+        order_amount: orderAmount,
+      };
+
+      console.log(`[NimbusPost Calculate] Requesting serviceability for Pincode: ${deliveryPincode}, Payment: ${paymentMethod}`);
+      const response = await axios.post(`${NIMBUSPOST_BASE_URL}/courier/serviceability`, payload, { headers });
+      
+      if (response.data.status === true && response.data.data) {
+        let courierList = response.data.data;
+        if (courierList.data && Array.isArray(courierList.data)) {
+          courierList = courierList.data;
+        }
+        
+        if (Array.isArray(courierList) && courierList.length > 0) {
+          console.log(`[NimbusPost Calculate] Sample courier structure:`, JSON.stringify(courierList[0], null, 2));
+          console.log(`[NimbusPost Calculate] Found ${courierList.length} courier options.`);
+
+          // Filter for forward couriers (exclude reverse)
+          const forwardCouriers = courierList.filter((c: any) => 
+            !c.reverse && 
+            !c.reverse_qc && 
+            !(c.name || "").toLowerCase().includes("reverse")
+          );
+
+          console.log(`[NimbusPost Calculate] Found ${forwardCouriers.length} forward courier options:`);
+          
+          let cheapestCourier: any = null;
+          let cheapestTotal = Infinity;
+
+          forwardCouriers.forEach((c: any) => {
+            const freight = Number(c.freight_charges ?? c.rate ?? c.freight_charge ?? c.charge ?? c.rate_amount ?? c.shipping_charge ?? 0);
+            const cod = Number(c.cod_charges ?? c.cod_charge ?? c.cod ?? 0);
+            const rto = freight; // RTO is typically equal to forward freight charges
+            
+            // Total evaluated cost = delivery freight + COD fee + RTO fee
+            const total = freight + (paymentMethod === "COD" ? cod : 0) + rto;
+            
+            console.log(`  - Courier: ${c.name || 'Unknown'}, Freight: ₹${freight}, COD Fee: ₹${cod}, RTO Fee: ₹${rto}, Evaluation Total: ₹${total}`);
+            
+            if (freight > 0 && total < cheapestTotal) {
+              cheapestTotal = total;
+              cheapestCourier = {
+                shippingFee: Math.ceil(freight),
+                codFee: paymentMethod === "COD" ? Math.ceil(cod) : 0,
+                rtoFee: Math.ceil(rto),
+                name: c.name
+              };
+            }
+          });
+
+          if (cheapestCourier) {
+            console.log(`[NimbusPost Calculate] Selected Cheapest Option: ${cheapestCourier.name} (Shipping: ₹${cheapestCourier.shippingFee}, COD: ₹${cheapestCourier.codFee}, RTO: ₹${cheapestCourier.rtoFee}, Eval Total: ₹${cheapestTotal})`);
+            return { shippingFee: cheapestCourier.shippingFee, codFee: cheapestCourier.codFee, rtoFee: cheapestCourier.rtoFee };
+          }
+        } else {
+          console.log(`[NimbusPost Calculate] No courier partners returned in API data.`);
+        }
+      } else {
+        console.log(`[NimbusPost Calculate] API request failed or returned false status. Response:`, response?.data);
+      }
+      
+      console.log(`[NimbusPost Calculate] Using fallback charges (₹50 Shipping, ${paymentMethod === "COD" ? "₹50" : "₹0"} COD, ₹50 RTO)`);
+      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50 };
+    } catch (error: any) {
+      console.log(`[NimbusPost Calculate Error] Failed to calculate rate: ${error.message}. Using fallbacks.`);
+      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50 };
+    }
+  }
 }
 
 export default NimbuspostService.getInstance();

@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { createOrder, getAdminOrders, getMyOrders, updateOrderStatus, updateAdminOrderStatus, returnOrder, nimbusShipOrder, nimbusCancelOrder, nimbusTrackOrder } from "./order.controller";
+import { createOrder, getAdminOrders, getMyOrders, updateOrderStatus, updateAdminOrderStatus, returnOrder, nimbusShipOrder, nimbusCancelOrder, nimbusTrackOrder, calculateShipping } from "./order.controller";
 import { authenticateToken, authorizeAdmin } from "../../common/middlewares/auth.middleware";
 
 const router = Router();
 
 router.post("/", authenticateToken(), createOrder);
+router.post("/calculate-shipping", authenticateToken(), calculateShipping);
 router.get("/my-orders", authenticateToken(), getMyOrders);
 router.put("/:id/cancel", authenticateToken(), updateOrderStatus);
 router.post("/:id/return", authenticateToken(), returnOrder);
