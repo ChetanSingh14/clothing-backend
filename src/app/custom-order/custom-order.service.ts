@@ -7,14 +7,27 @@ const prisma = new PrismaClient();
 export const createCustomOrder = async (data: any) => {
   let finalImageUrl = data.designImageUrl;
 
-  // If it's a base64 string, upload to Cloudinary
-  if (finalImageUrl && finalImageUrl.startsWith("data:image")) {
-    try {
-      const uploadRes = await uploadToCloudinary(finalImageUrl, "custom-designs");
-      finalImageUrl = uploadRes.url;
-    } catch (error) {
-      throw new ErrorHandler("Failed to upload custom design image", 500);
+  if (finalImageUrl) {
+    const imagesArray = Array.isArray(finalImageUrl)
+      ? finalImageUrl
+      : typeof finalImageUrl === "string"
+      ? finalImageUrl.split(",").filter(Boolean)
+      : [];
+
+    const uploadedUrls = [];
+    for (const img of imagesArray) {
+      if (img.startsWith("data:image")) {
+        try {
+          const uploadRes = await uploadToCloudinary(img, "custom-designs");
+          uploadedUrls.push(uploadRes.url);
+        } catch (error) {
+          throw new ErrorHandler("Failed to upload custom design image", 500);
+        }
+      } else {
+        uploadedUrls.push(img);
+      }
     }
+    finalImageUrl = uploadedUrls.join(",");
   }
 
   const newOrder = await prisma.customOrder.create({
