@@ -27,7 +27,8 @@ export const createOrderService = async (
   applyOffer?: boolean,
   shippingCharges: number = 0,
   codCharges: number = 0,
-  rtoCharges: number = 0
+  rtoCharges: number = 0,
+  courierId: string | null = null
 ) => {
   let finalAmount = Number(totalAmount);
   let appliedDiscount = 0;
@@ -77,6 +78,7 @@ export const createOrderService = async (
       pincode: details?.pincode,
       state: details?.state,
       city: details?.city,
+      nimbuspostCourierId: courierId ? String(courierId) : null,
     },
   });
 

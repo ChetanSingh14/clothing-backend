@@ -60,18 +60,29 @@ class NimbuspostService {
   public async createShipment(order: any, items: any[]): Promise<any> {
     try {
       let headers = await this.getAuthHeaders();
+
+      // Per-shirt estimated dimensions
+      const SHIRT_WEIGHT_G = 280;
+      const SHIRT_LENGTH_CM = 33;
+      const SHIRT_BREADTH_CM = 25;
+      const SHIRT_HEIGHT_CM = 3;
+
+      // Calculate total quantity from items
+      const totalQty = items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 1), 0);
+      const packageWeight = SHIRT_WEIGHT_G * totalQty;
+      const packageHeight = SHIRT_HEIGHT_CM * totalQty;
       
-      const payload = {
+      const payload: any = {
         order_number: `#${order.id}`,
         shipping_charges: 0,
         discount: 0,
         cod_charges: 0,
         payment_type: order.paymentMethod === "COD" ? "cod" : "prepaid",
         order_amount: order.totalAmount,
-        package_weight: 500, // Default 500g
-        package_length: 10,
-        package_breadth: 10,
-        package_height: 10,
+        package_weight: packageWeight,
+        package_length: SHIRT_LENGTH_CM,
+        package_breadth: SHIRT_BREADTH_CM,
+        package_height: packageHeight,
         consignee: {
           name: order.fullName || "Customer Name",
           address: order.address || "No Address Provided",
@@ -98,6 +109,26 @@ class NimbuspostService {
           sku: `SKU-${item.id || 'GENERIC'}`
         }))
       };
+
+      console.log(`[NimbusPost Ship] Package: ${totalQty} items, ${packageWeight}g, ${SHIRT_LENGTH_CM}x${SHIRT_BREADTH_CM}x${packageHeight}cm`);
+
+      // Pass courier_id if available (stored from shipping calculation step)
+      if (order.nimbuspostCourierId) {
+        payload.courier_id = Number(order.nimbuspostCourierId);
+        console.log(`[NimbusPost Ship] Using stored courier_id: ${payload.courier_id}`);
+      } else {
+        // No stored courier — run a quick serviceability check to pick one
+        console.log(`[NimbusPost Ship] No stored courier_id. Running serviceability to find one...`);
+        const rates = await this.calculateShippingRate(
+          order.pincode || "110001",
+          order.paymentMethod || "COD",
+          order.totalAmount || 1000
+        );
+        if (rates.courierId) {
+          payload.courier_id = Number(rates.courierId);
+          console.log(`[NimbusPost Ship] Resolved courier_id from serviceability: ${payload.courier_id}`);
+        }
+      }
 
       let response = await axios.post(`${NIMBUSPOST_BASE_URL}/shipments`, payload, { headers });
       
@@ -161,24 +192,37 @@ class NimbuspostService {
       throw new ErrorHandler(error.response?.data?.message || "Unable to cancel", 500);
     }
   }
-  public async calculateShippingRate(deliveryPincode: string, paymentMethod: string, orderAmount: number = 1000): Promise<{ shippingFee: number, codFee: number, rtoFee: number }> {
+  public async calculateShippingRate(deliveryPincode: string, paymentMethod: string, orderAmount: number = 1000, totalQuantity: number = 1): Promise<{ shippingFee: number, codFee: number, rtoFee: number, courierId: number | null }> {
     try {
+      // Per-shirt estimated dimensions
+      const SHIRT_WEIGHT_G = 280;
+      const SHIRT_LENGTH_CM = 33;
+      const SHIRT_BREADTH_CM = 25;
+      const SHIRT_HEIGHT_CM = 3;
+
+      const packageWeight = SHIRT_WEIGHT_G * Math.max(1, totalQuantity);
+      const packageHeight = SHIRT_HEIGHT_CM * Math.max(1, totalQuantity);
+
       const email = process.env.NIMBUSPOST_EMAIL;
       const password = process.env.NIMBUSPOST_PASSWORD;
       if (!email || !password) {
         console.log(`[NimbusPost Calculate] Credentials not configured. Using fallback charges. Pincode: ${deliveryPincode}`);
-        return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50 };
+        return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50, courierId: null };
       }
 
       const headers = await this.getAuthHeaders();
       const payload = {
         origin: process.env.NIMBUSPOST_WAREHOUSE_PINCODE || "110001",
         destination: deliveryPincode,
-        package_weight: 500,
+        package_weight: packageWeight,
+        package_length: SHIRT_LENGTH_CM,
+        package_breadth: SHIRT_BREADTH_CM,
+        package_height: packageHeight,
         payment_type: paymentMethod === "COD" ? "cod" : "prepaid",
         order_amount: orderAmount,
       };
 
+      console.log(`[NimbusPost Calculate] Package: ${totalQuantity} items, ${packageWeight}g, ${SHIRT_LENGTH_CM}x${SHIRT_BREADTH_CM}x${packageHeight}cm`);
       console.log(`[NimbusPost Calculate] Requesting serviceability for Pincode: ${deliveryPincode}, Payment: ${paymentMethod}`);
       const response = await axios.post(`${NIMBUSPOST_BASE_URL}/courier/serviceability`, payload, { headers });
       
@@ -208,11 +252,12 @@ class NimbuspostService {
             const freight = Number(c.freight_charges ?? c.rate ?? c.freight_charge ?? c.charge ?? c.rate_amount ?? c.shipping_charge ?? 0);
             const cod = Number(c.cod_charges ?? c.cod_charge ?? c.cod ?? 0);
             const rto = freight; // RTO is typically equal to forward freight charges
+            const cId = c.courier_id ?? c.id ?? null;
             
             // Total evaluated cost = delivery freight + COD fee + RTO fee
             const total = freight + (paymentMethod === "COD" ? cod : 0) + rto;
             
-            console.log(`  - Courier: ${c.name || 'Unknown'}, Freight: ₹${freight}, COD Fee: ₹${cod}, RTO Fee: ₹${rto}, Evaluation Total: ₹${total}`);
+            console.log(`  - Courier: ${c.name || 'Unknown'} (ID: ${cId}), Freight: ₹${freight}, COD Fee: ₹${cod}, RTO Fee: ₹${rto}, Evaluation Total: ₹${total}`);
             
             if (freight > 0 && total < cheapestTotal) {
               cheapestTotal = total;
@@ -220,14 +265,15 @@ class NimbuspostService {
                 shippingFee: Math.ceil(freight),
                 codFee: paymentMethod === "COD" ? Math.ceil(cod) : 0,
                 rtoFee: Math.ceil(rto),
-                name: c.name
+                name: c.name,
+                courierId: cId,
               };
             }
           });
 
           if (cheapestCourier) {
-            console.log(`[NimbusPost Calculate] Selected Cheapest Option: ${cheapestCourier.name} (Shipping: ₹${cheapestCourier.shippingFee}, COD: ₹${cheapestCourier.codFee}, RTO: ₹${cheapestCourier.rtoFee}, Eval Total: ₹${cheapestTotal})`);
-            return { shippingFee: cheapestCourier.shippingFee, codFee: cheapestCourier.codFee, rtoFee: cheapestCourier.rtoFee };
+            console.log(`[NimbusPost Calculate] Selected Cheapest Option: ${cheapestCourier.name} (ID: ${cheapestCourier.courierId}, Shipping: ₹${cheapestCourier.shippingFee}, COD: ₹${cheapestCourier.codFee}, RTO: ₹${cheapestCourier.rtoFee}, Eval Total: ₹${cheapestTotal})`);
+            return { shippingFee: cheapestCourier.shippingFee, codFee: cheapestCourier.codFee, rtoFee: cheapestCourier.rtoFee, courierId: cheapestCourier.courierId };
           }
         } else {
           console.log(`[NimbusPost Calculate] No courier partners returned in API data.`);
@@ -237,10 +283,10 @@ class NimbuspostService {
       }
       
       console.log(`[NimbusPost Calculate] Using fallback charges (₹50 Shipping, ${paymentMethod === "COD" ? "₹50" : "₹0"} COD, ₹50 RTO)`);
-      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50 };
+      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50, courierId: null };
     } catch (error: any) {
       console.log(`[NimbusPost Calculate Error] Failed to calculate rate: ${error.message}. Using fallbacks.`);
-      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50 };
+      return { shippingFee: 50, codFee: paymentMethod === "COD" ? 50 : 0, rtoFee: 50, courierId: null };
     }
   }
 }

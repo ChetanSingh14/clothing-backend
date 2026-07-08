@@ -9,7 +9,7 @@ import nimbuspostService from "../../common/services/nimbuspost.service";
 export const createOrder = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const userId = req.user?.id;
-    const { totalAmount, items, paymentMethod, details, applyOffer, shippingCharges, codCharges, rtoCharges } = req.body;
+    const { totalAmount, items, paymentMethod, details, applyOffer, shippingCharges, codCharges, rtoCharges, courierId } = req.body;
 
     if (!userId) {
       throw new ErrorHandler("Unauthorized", 401);
@@ -19,7 +19,7 @@ export const createOrder = catchAsyncError(
     }
 
     logger.info(`📦 [Order] Placement attempt by user ID ${userId} for amount ₹${totalAmount}${applyOffer ? ' with offer applied' : ''}`);
-    const result = await createOrderService(userId, totalAmount, items, paymentMethod, details, applyOffer, shippingCharges || 0, codCharges || 0, rtoCharges || 0);
+    const result = await createOrderService(userId, totalAmount, items, paymentMethod, details, applyOffer, shippingCharges || 0, codCharges || 0, rtoCharges || 0, courierId || null);
     res.status(201).json(result);
   }
 );
@@ -151,10 +151,10 @@ export const nimbusTrackOrder = catchAsyncError(
 
 export const calculateShipping = catchAsyncError(
   async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-    const { pincode, paymentMethod, orderAmount } = req.body;
+    const { pincode, paymentMethod, orderAmount, totalQuantity } = req.body;
     if (!pincode) throw new ErrorHandler("Pincode is required", 400);
 
-    const { shippingFee, codFee, rtoFee } = await nimbuspostService.calculateShippingRate(pincode, paymentMethod || "COD", Number(orderAmount || 1000));
-    res.status(200).json({ success: true, shippingFee, codFee, rtoFee });
+    const { shippingFee, codFee, rtoFee, courierId } = await nimbuspostService.calculateShippingRate(pincode, paymentMethod || "COD", Number(orderAmount || 1000), Number(totalQuantity || 1));
+    res.status(200).json({ success: true, shippingFee, codFee, rtoFee, courierId });
   }
 );

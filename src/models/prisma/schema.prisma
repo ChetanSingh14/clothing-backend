@@ -88,6 +88,7 @@ model Order {
   nimbuspostShipmentId String?
   nimbuspostOrderId    String?
   nimbuspostLabel      String?
+  nimbuspostCourierId  String?
 
   @@index([userId])
 }
