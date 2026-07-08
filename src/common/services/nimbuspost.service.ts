@@ -57,7 +57,7 @@ class NimbuspostService {
     };
   }
 
-  public async createShipment(order: any, items: any[]): Promise<any> {
+  public async createShipment(order: any, items: any[], isExchange = false): Promise<any> {
     try {
       let headers = await this.getAuthHeaders();
 
@@ -101,7 +101,7 @@ class NimbuspostService {
       });
 
       const payload: any = {
-        order_number: `#${order.id}`,
+        order_number: isExchange ? `EX-${order.id}` : `#${order.id}`,
         shipping_charges: 0,
         discount: 0,
         cod_charges: 0,

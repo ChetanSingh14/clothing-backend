@@ -28,6 +28,7 @@ model User {
   orders       Order[]
   wishlists    Wishlist[]
   customOrders CustomOrder[]
+  exchangeOrders ExchangeOrder[]
 }
 
 model Product {
@@ -174,4 +175,35 @@ model CustomOrder {
   updatedAt      DateTime @updatedAt
 
   @@index([userId])
+}
+
+model ExchangeOrder {
+  id            Int      @id @default(autoincrement())
+  originalOrderId Int
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount   Float    @default(0)
+  items         Json     // Array of items to be exchanged/sent
+  status        String   @default("BOOKED") // BOOKED, SHIPPED, DELIVERED, CANCELLED
+  paymentMethod String   @default("PREPAID") // Usually prepaid since it's an exchange
+  fullName      String?
+  email         String?
+  phone         String?
+  address       String?
+  landmark      String?
+  pincode       String?
+  state         String?
+  city          String?
+  pickupAddress String?  // Address from where the return item should be picked up
+  exchangeNotes String?  // Notes/details about size exchange requested
+  createdAt     DateTime @default(now())
+  deliveredAt   DateTime?
+  nimbuspostAwb        String?
+  nimbuspostShipmentId String?
+  nimbuspostOrderId    String?
+  nimbuspostLabel      String?
+  nimbuspostCourierId  String?
+
+  @@index([userId])
+  @@index([originalOrderId])
 }

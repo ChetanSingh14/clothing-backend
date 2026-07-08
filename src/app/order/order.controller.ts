@@ -1,6 +1,18 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../../common/middlewares/auth.middleware";
-import { createOrderService, getAdminOrdersService, getMyOrdersService, updateOrderStatusService, updateAdminOrderStatusService, returnOrderService } from "./order.service";
+import { 
+  createOrderService, 
+  getAdminOrdersService, 
+  getMyOrdersService, 
+  updateOrderStatusService, 
+  updateAdminOrderStatusService, 
+  returnOrderService,
+  getAdminExchangeOrdersService,
+  updateAdminExchangeOrderStatusService,
+  nimbusShipExchangeOrderService,
+  nimbusCancelExchangeOrderService,
+  nimbusTrackExchangeOrderService
+} from "./order.service";
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
 import prisma from "../../common/config/prisma.config";
@@ -168,5 +180,54 @@ export const calculateShipping = catchAsyncError(
       Number(totalQuantity)
     );
     res.status(200).json({ success: true, shippingFee, codFee, rtoFee, courierId });
+  }
+);
+
+export const getAdminExchangeOrders = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const result = await getAdminExchangeOrdersService();
+    res.status(200).json(result);
+  }
+);
+
+export const updateAdminExchangeOrderStatus = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const id = Number(req.params.id);
+    const { status } = req.body;
+    if (isNaN(id)) throw new ErrorHandler("Invalid exchange order ID", 400);
+    if (!status) throw new ErrorHandler("Status is required", 400);
+
+    const result = await updateAdminExchangeOrderStatusService(id, status);
+    res.status(200).json(result);
+  }
+);
+
+export const nimbusShipExchangeOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const id = Number(req.params.id);
+    if (isNaN(id)) throw new ErrorHandler("Invalid exchange order ID", 400);
+
+    const result = await nimbusShipExchangeOrderService(id);
+    res.status(200).json(result);
+  }
+);
+
+export const nimbusCancelExchangeOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const id = Number(req.params.id);
+    if (isNaN(id)) throw new ErrorHandler("Invalid exchange order ID", 400);
+
+    const result = await nimbusCancelExchangeOrderService(id);
+    res.status(200).json(result);
+  }
+);
+
+export const nimbusTrackExchangeOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const id = Number(req.params.id);
+    if (isNaN(id)) throw new ErrorHandler("Invalid exchange order ID", 400);
+
+    const result = await nimbusTrackExchangeOrderService(id);
+    res.status(200).json(result);
   }
 );

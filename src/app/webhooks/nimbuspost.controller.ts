@@ -69,46 +69,70 @@ export const handleNimbuspostWebhook = async (req: Request, res: Response): Prom
       return;
     }
 
-    // Find the corresponding order by AWB
+    // Find the corresponding order by AWB (check standard orders first)
     const order = await prisma.order.findFirst({
       where: { nimbuspostAwb: String(awb) }
     });
 
+    let exchangeOrder = null;
     if (!order) {
-      logger.warn(`No order found with nimbuspostAwb: ${awb}`);
-      res.status(404).json({ success: false, error: "Order not found for AWB" });
+      // If not found in standard orders, check exchange orders
+      exchangeOrder = await prisma.exchangeOrder.findFirst({
+        where: { nimbuspostAwb: String(awb) }
+      });
+    }
+
+    if (!order && !exchangeOrder) {
+      logger.warn(`No order or exchange order found with nimbuspostAwb: ${awb}`);
+      res.status(404).json({ success: false, error: "Order or Exchange order not found for AWB" });
       return;
     }
 
     const mappedStatus = mapNimbusStatusToOrderStatus(String(nimbusStatus));
     
-    if (mappedStatus && mappedStatus !== order.status) {
-      logger.info(`Updating Order #${order.id} status from ${order.status} to ${mappedStatus} via NimbusPost Webhook`);
-      
-      const updatedOrder = await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          status: mappedStatus,
-          ...(mappedStatus === "DELIVERED" && !order.deliveredAt ? { deliveredAt: new Date() } : {})
-        }
-      });
-
-      // If status changed to DELIVERED, send the delivered email
-      if (mappedStatus === "DELIVERED") {
-        let email = updatedOrder.email;
-        if (!email) {
-          const user = await prisma.user.findUnique({
-            where: { id: updatedOrder.userId },
-            select: { email: true }
+    if (mappedStatus) {
+      if (exchangeOrder) {
+        if (mappedStatus !== exchangeOrder.status) {
+          logger.info(`Updating Exchange Order #${exchangeOrder.id} status from ${exchangeOrder.status} to ${mappedStatus} via NimbusPost Webhook`);
+          
+          await prisma.exchangeOrder.update({
+            where: { id: exchangeOrder.id },
+            data: {
+              status: mappedStatus,
+              ...(mappedStatus === "DELIVERED" && !exchangeOrder.deliveredAt ? { deliveredAt: new Date() } : {})
+            }
           });
-          email = user?.email || null;
         }
-        if (email) {
-          sendOrderDeliveredEmail(email, updatedOrder);
+      } else if (order) {
+        if (mappedStatus !== order.status) {
+          logger.info(`Updating Order #${order.id} status from ${order.status} to ${mappedStatus} via NimbusPost Webhook`);
+          
+          const updatedOrder = await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              status: mappedStatus,
+              ...(mappedStatus === "DELIVERED" && !order.deliveredAt ? { deliveredAt: new Date() } : {})
+            }
+          });
+
+          // If status changed to DELIVERED, send the delivered email
+          if (mappedStatus === "DELIVERED") {
+            let email = updatedOrder.email;
+            if (!email) {
+              const user = await prisma.user.findUnique({
+                where: { id: updatedOrder.userId },
+                select: { email: true }
+              });
+              email = user?.email || null;
+            }
+            if (email) {
+              sendOrderDeliveredEmail(email, updatedOrder);
+            }
+          }
         }
       }
     } else {
-      logger.info(`Order #${order.id} status is already ${order.status} or status mapping failed for: ${nimbusStatus}`);
+      logger.info(`AWB ${awb} status update ignored: already at target status or status mapping failed for ${nimbusStatus}`);
     }
 
     res.status(200).json({ success: true, message: "Webhook processed successfully" });

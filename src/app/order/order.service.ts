@@ -244,9 +244,139 @@ export const returnOrderService = async (userId: number, orderId: number, return
     },
   });
 
+  let pickupAddress = returnAddress;
+  let exchangeNotes = "";
+  if (returnAddress.includes(" | Size Changes: ")) {
+    const parts = returnAddress.split(" | Size Changes: ");
+    pickupAddress = parts[0].replace("Pickup Address: ", "");
+    exchangeNotes = parts[1];
+  }
+
+  // Create separate ExchangeOrder record
+  await prisma.exchangeOrder.create({
+    data: {
+      originalOrderId: orderId,
+      userId,
+      totalAmount: 0,
+      items: order.items || [],
+      status: "BOOKED",
+      paymentMethod: "PREPAID",
+      fullName: order.fullName,
+      email: order.email,
+      phone: order.phone,
+      address: order.address,
+      landmark: order.landmark,
+      pincode: order.pincode,
+      state: order.state,
+      city: order.city,
+      pickupAddress,
+      exchangeNotes,
+    }
+  });
+
   // Send return email alert to admins
   const { sendOrderReturnAlertEmail } = require("../../common/services/email.service");
   sendOrderReturnAlertEmail(updatedOrder, returnAddress);
 
   return { success: true, message: "Exchange request filed successfully", data: updatedOrder };
+};
+
+export const getAdminExchangeOrdersService = async () => {
+  const exchanges = await prisma.exchangeOrder.findMany({
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return {
+    success: true,
+    data: exchanges,
+  };
+};
+
+export const updateAdminExchangeOrderStatusService = async (id: number, status: string) => {
+  const exchange = await prisma.exchangeOrder.findUnique({ where: { id } });
+  if (!exchange) {
+    throw new ErrorHandler("Exchange order not found", 404);
+  }
+
+  if (status === "CANCELLED" && exchange.nimbuspostAwb) {
+    try {
+      await nimbuspostService.cancelShipment(exchange.nimbuspostAwb);
+    } catch (error: any) {
+      console.warn(`[NimbusPost Cancel] Failed to cancel shipment for AWB ${exchange.nimbuspostAwb} during exchange status update: ${error.message}`);
+    }
+  }
+
+  const updatedExchange = await prisma.exchangeOrder.update({
+    where: { id },
+    data: {
+      status,
+      ...(status === "DELIVERED" ? { deliveredAt: new Date() } : {}),
+    },
+  });
+
+  return { success: true, data: updatedExchange };
+};
+
+export const nimbusShipExchangeOrderService = async (id: number) => {
+  const exchange = await prisma.exchangeOrder.findUnique({ where: { id } });
+  if (!exchange) throw new ErrorHandler("Exchange order not found", 404);
+
+  if (exchange.nimbuspostAwb) throw new ErrorHandler("Exchange order already shipped with Nimbuspost", 400);
+
+  const items = typeof exchange.items === 'string' ? JSON.parse(exchange.items) : exchange.items;
+
+  const nimbusResponse = await nimbuspostService.createShipment(exchange, items as any[], true);
+
+  const updatedExchange = await prisma.exchangeOrder.update({
+    where: { id },
+    data: {
+      nimbuspostAwb: nimbusResponse.awb_number,
+      nimbuspostShipmentId: String(nimbusResponse.shipment_id),
+      nimbuspostOrderId: String(nimbusResponse.order_id),
+      nimbuspostLabel: nimbusResponse.label,
+      status: "SHIPPED"
+    }
+  });
+
+  return { success: true, data: updatedExchange, message: "Exchange order shipped successfully via Nimbuspost" };
+};
+
+export const nimbusCancelExchangeOrderService = async (id: number) => {
+  const exchange = await prisma.exchangeOrder.findUnique({ where: { id } });
+  if (!exchange || !exchange.nimbuspostAwb) {
+    throw new ErrorHandler("Exchange order not found or no AWB associated", 404);
+  }
+
+  try {
+    await nimbuspostService.cancelShipment(exchange.nimbuspostAwb);
+  } catch (error: any) {
+    console.warn(`[NimbusPost Cancel] Shipment cancel failed for exchange AWB ${exchange.nimbuspostAwb}: ${error.message}`);
+  }
+
+  const updatedExchange = await prisma.exchangeOrder.update({
+    where: { id },
+    data: {
+      status: "CANCELLED",
+    }
+  });
+
+  return { success: true, message: "Exchange shipment cancelled successfully", data: updatedExchange };
+};
+
+export const nimbusTrackExchangeOrderService = async (id: number) => {
+  const exchange = await prisma.exchangeOrder.findUnique({ where: { id } });
+  if (!exchange || !exchange.nimbuspostAwb) {
+    throw new ErrorHandler("Exchange order not found or no AWB associated", 404);
+  }
+
+  const trackingInfo = await nimbuspostService.trackShipment(exchange.nimbuspostAwb);
+  return { success: true, data: trackingInfo };
 };
