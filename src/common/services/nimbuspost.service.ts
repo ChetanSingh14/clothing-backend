@@ -57,10 +57,42 @@ class NimbuspostService {
     };
   }
 
+  private async postWithAuth(url: string, payload: any): Promise<any> {
+    let headers = await this.getAuthHeaders();
+    try {
+      let response = await axios.post(url, payload, { headers });
+      
+      if (response.data && response.data.status === false && 
+          (response.data.message === "Missing or invalid Token in request" || 
+           response.data.message === "Unauthorized")) {
+        logger.warn(`[NimbusPost] Auth failure in response body: ${response.data.message}. Clearing token and retrying...`);
+        this.token = null;
+        headers = await this.getAuthHeaders();
+        response = await axios.post(url, payload, { headers });
+      }
+      return response;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || "";
+      const isAuthError = 
+        error.response?.status === 401 || 
+        error.response?.status === 403 ||
+        (error.response?.status === 400 && (
+          errorMessage === "Missing or invalid Token in request" ||
+          errorMessage === "Unauthorized"
+        ));
+      
+      if (isAuthError) {
+        logger.warn(`[NimbusPost] Auth error caught: ${errorMessage}. Clearing token and retrying...`);
+        this.token = null;
+        headers = await this.getAuthHeaders();
+        return await axios.post(url, payload, { headers });
+      }
+      throw error;
+    }
+  }
+
   public async createShipment(order: any, items: any[], isExchange = false): Promise<any> {
     try {
-      let headers = await this.getAuthHeaders();
-
       // Per-shirt estimated dimensions
       const SHIRT_WEIGHT_G = 280;
       const SHIRT_LENGTH_CM = 33;
@@ -159,14 +191,7 @@ class NimbuspostService {
         }
       }
 
-      let response = await axios.post(`${NIMBUSPOST_BASE_URL}/shipments`, payload, { headers });
-      
-      // If unauthorized, retry login once
-      if (response.data.status === false && response.data.message === "Unauthorized") {
-         await this.login();
-         headers = await this.getAuthHeaders();
-         response = await axios.post(`${NIMBUSPOST_BASE_URL}/shipments`, payload, { headers });
-      }
+      let response = await this.postWithAuth(`${NIMBUSPOST_BASE_URL}/shipments`, payload);
 
       if (response.data.status === true) {
         return response.data.data;
@@ -174,10 +199,6 @@ class NimbuspostService {
         throw new ErrorHandler(response.data.message || "Failed to create shipment", 500);
       }
     } catch (error: any) {
-      if (error.response && error.response.status === 401) {
-          // Token expired, retry once
-          this.token = null;
-      }
       logger.error(`Nimbuspost Create Shipment Error: ${error.message}`);
       if (error instanceof ErrorHandler) throw error;
       throw new ErrorHandler(error.response?.data?.message || error.message || "Failed to create shipment", 500);
@@ -186,10 +207,9 @@ class NimbuspostService {
 
   public async trackShipment(awb: string): Promise<any> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await axios.post(`${NIMBUSPOST_BASE_URL}/shipments/track/bulk`, {
+      const response = await this.postWithAuth(`${NIMBUSPOST_BASE_URL}/shipments/track/bulk`, {
           awb: [awb]
-      }, { headers });
+      });
 
       if (response.data.status === true && response.data.data && response.data.data.length > 0) {
         return response.data.data[0];
@@ -198,18 +218,16 @@ class NimbuspostService {
       }
     } catch (error: any) {
       logger.error(`Nimbuspost Track Shipment Error: ${error.message}`);
+      if (error instanceof ErrorHandler) throw error;
       throw new ErrorHandler(error.response?.data?.message || "Failed to track shipment", 500);
     }
   }
 
   public async cancelShipment(awb: string): Promise<any> {
     try {
-      const headers = await this.getAuthHeaders();
-      // Assuming cancel endpoint is /shipments/cancel according to some patterns, 
-      // User doc just says POST Cancel Shipment, Cancel Shipment : { "status": false, "message": "Unable to cancel" }
-      const response = await axios.post(`${NIMBUSPOST_BASE_URL}/shipments/cancel`, {
+      const response = await this.postWithAuth(`${NIMBUSPOST_BASE_URL}/shipments/cancel`, {
           awb: awb
-      }, { headers });
+      });
 
       if (response.data.status === true) {
         return response.data;
@@ -218,6 +236,7 @@ class NimbuspostService {
       }
     } catch (error: any) {
       logger.error(`Nimbuspost Cancel Shipment Error: ${error.message}`);
+      if (error instanceof ErrorHandler) throw error;
       throw new ErrorHandler(error.response?.data?.message || "Unable to cancel", 500);
     }
   }
@@ -243,7 +262,6 @@ class NimbuspostService {
         throw new ErrorHandler("Nimbuspost warehouse pincode is not configured", 500);
       }
 
-      const headers = await this.getAuthHeaders();
       const payload = {
         origin: originPincode,
         destination: deliveryPincode,
@@ -257,7 +275,7 @@ class NimbuspostService {
 
       console.log(`[NimbusPost Calculate] Package: ${totalQuantity} items, ${packageWeight}g, ${SHIRT_LENGTH_CM}x${SHIRT_BREADTH_CM}x${packageHeight}cm`);
       console.log(`[NimbusPost Calculate] Requesting serviceability for Pincode: ${deliveryPincode}, Payment: ${paymentMethod}`);
-      const response = await axios.post(`${NIMBUSPOST_BASE_URL}/courier/serviceability`, payload, { headers });
+      const response = await this.postWithAuth(`${NIMBUSPOST_BASE_URL}/courier/serviceability`, payload);
       
       if (response.data.status === true && response.data.data) {
         let courierList = response.data.data;
