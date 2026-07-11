@@ -380,3 +380,56 @@ export const nimbusTrackExchangeOrderService = async (id: number) => {
   const trackingInfo = await nimbuspostService.trackShipment(exchange.nimbuspostAwb);
   return { success: true, data: trackingInfo };
 };
+
+export const adminCreateOrderService = async (
+  adminUserId: number,
+  data: {
+    userId?: number;
+    totalAmount?: number;
+    items?: any;
+    paymentMethod?: string;
+    status?: string;
+    shippingCharges?: number;
+    codCharges?: number;
+    rtoCharges?: number;
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    landmark?: string;
+    pincode?: string;
+    state?: string;
+    city?: string;
+  }
+) => {
+  // Use provided userId or fall back to admin's own userId (Prisma relation requires it)
+  const orderUserId = data.userId || adminUserId;
+
+  const order = await prisma.order.create({
+    data: {
+      userId: orderUserId,
+      totalAmount: data.totalAmount || 0,
+      shippingCharges: data.shippingCharges || 0,
+      codCharges: data.codCharges || 0,
+      rtoCharges: data.rtoCharges || 0,
+      items: data.items || [],
+      paymentMethod: data.paymentMethod || "COD",
+      status: data.status || "BOOKED",
+      fullName: data.fullName || null,
+      email: data.email || null,
+      phone: data.phone || null,
+      address: data.address || null,
+      landmark: data.landmark || null,
+      pincode: data.pincode || null,
+      state: data.state || null,
+      city: data.city || null,
+    },
+  });
+
+  return {
+    success: true,
+    message: "Order created successfully by admin",
+    data: order,
+  };
+};
+

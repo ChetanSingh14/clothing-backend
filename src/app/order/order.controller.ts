@@ -11,7 +11,8 @@ import {
   updateAdminExchangeOrderStatusService,
   nimbusShipExchangeOrderService,
   nimbusCancelExchangeOrderService,
-  nimbusTrackExchangeOrderService
+  nimbusTrackExchangeOrderService,
+  adminCreateOrderService
 } from "./order.service";
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
@@ -229,5 +230,15 @@ export const nimbusTrackExchangeOrder = catchAsyncError(
 
     const result = await nimbusTrackExchangeOrderService(id);
     res.status(200).json(result);
+  }
+);
+
+export const adminCreateOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const adminUserId = req.user?.id;
+    if (!adminUserId) throw new ErrorHandler("Unauthorized", 401);
+
+    const result = await adminCreateOrderService(adminUserId, req.body);
+    res.status(201).json(result);
   }
 );
