@@ -6,6 +6,7 @@ import { createServer } from "http";
 import app from "./app";
 import { logger } from "./common/utils/logger.utils";
 import prisma from "./common/config/prisma.config";
+import { socketService } from "./common/services/socket.service";
 
 const PORT: number = Number(process.env.PORT) || 4000;
 
@@ -33,6 +34,7 @@ const startServer = async (): Promise<void> => {
     await initializeDatabase();
 
     const httpServer = createServer(app);
+    socketService.init(httpServer);
 
     httpServer.listen(PORT, "0.0.0.0", () => {
       logger.info(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);

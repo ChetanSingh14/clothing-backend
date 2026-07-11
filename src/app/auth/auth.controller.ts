@@ -3,6 +3,7 @@ import { registerService, loginService, googleLoginService, registerWithOtpServi
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
 import { generateAndSendOtp } from "../../common/services/otp.service";
+import { socketService } from "../../common/services/socket.service";
 
 import { AuthRequest } from "../../common/middlewares/auth.middleware";
 
@@ -45,6 +46,9 @@ export const signup = catchAsyncError(
 
     const result = await registerWithOtpService(name, email, password, otp, otpToken);
 
+    // Invalidate other active sessions if any (unlikely for new signup, but good for uniformity)
+    socketService.checkActiveSessions(result.user.id);
+
     res.status(201).json({
       success: true,
       message: "User registered successfully",
@@ -60,6 +64,9 @@ export const login = catchAsyncError(
     logger.info(`🔑 [Login] Auth attempt for email: ${email}`);
 
     const result = await loginService(email, password);
+
+    // Invalidate and terminate other active sessions in real-time
+    socketService.checkActiveSessions(result.user.id);
 
     res.status(200).json({
       success: true,
@@ -79,6 +86,9 @@ export const googleLogin = catchAsyncError(
     logger.info(`🌐 [Google Login] Processing token`);
 
     const result = await googleLoginService(idToken);
+
+    // Invalidate and terminate other active sessions in real-time
+    socketService.checkActiveSessions(result.user.id);
 
     res.status(200).json({
       success: true,
