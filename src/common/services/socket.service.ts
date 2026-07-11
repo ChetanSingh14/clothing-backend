@@ -47,9 +47,11 @@ class SocketService {
           return next(new Error("Authentication error: Session expired or invalid token"));
         }
 
-        // Attach user info to socket
-        (socket as any).userId = decoded.id;
-        (socket as any).token = token;
+        // Attach user info to socket.data so it is synchronized across RemoteSockets (e.g. fetchSockets)
+        socket.data = {
+          userId: decoded.id,
+          token: token
+        };
 
         next();
       } catch (err) {
@@ -58,7 +60,7 @@ class SocketService {
     });
 
     this.io.on("connection", (socket: Socket) => {
-      const userId = (socket as any).userId;
+      const userId = socket.data.userId;
       logger.info(`⚡ Socket client connected: ${socket.id} (User: ${userId})`);
 
       // Join room for this user to target all of their active connections
@@ -89,7 +91,7 @@ class SocketService {
       const sockets = await this.io.in(`user_${userId}`).fetchSockets();
 
       for (const socket of sockets) {
-        const socketToken = (socket as any).token;
+        const socketToken = socket.data.token;
         if (socketToken && socketToken !== activeToken) {
           logger.info(`🚨 Invalidating socket session for User: ${userId}, Socket: ${socket.id}`);
           socket.emit("session_expired", { reason: "new_login" });
