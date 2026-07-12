@@ -409,7 +409,7 @@ export const sendNewOrderAlertEmail = async (order: any) => {
     for (const recipient of recipients) {
       try {
         const { data, error } = await resend.emails.send({
-          from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
+          from: "MDFK Clothing <hello@mdfkclothing.com>",
           to: recipient,
           subject: `New Booking Created #${orderId} - MDFK Clothing`,
           html: `
@@ -586,7 +586,7 @@ export const sendOrderReturnAlertEmail = async (order: any, returnAddress: strin
     for (const recipient of recipients) {
       try {
         const { data, error } = await resend.emails.send({
-          from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
+          from: "MDFK Clothing <hello@mdfkclothing.com>",
           to: recipient,
           subject: `Size Exchange Requested #${orderId} - MDFK Clothing`,
           html: `
