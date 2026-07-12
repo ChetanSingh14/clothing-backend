@@ -433,3 +433,62 @@ export const adminCreateOrderService = async (
   };
 };
 
+export const updateAdminOrderService = async (orderId: number, data: any) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId }
+  });
+
+  if (!order) {
+    throw new ErrorHandler("Order not found", 404);
+  }
+
+  // Update order with dynamic fields provided
+  const updatedOrder = await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      totalAmount: data.totalAmount !== undefined ? Number(data.totalAmount) : undefined,
+      shippingCharges: data.shippingCharges !== undefined ? Number(data.shippingCharges) : undefined,
+      codCharges: data.codCharges !== undefined ? Number(data.codCharges) : undefined,
+      rtoCharges: data.rtoCharges !== undefined ? Number(data.rtoCharges) : undefined,
+      items: data.items !== undefined ? data.items : undefined,
+      paymentMethod: data.paymentMethod !== undefined ? data.paymentMethod : undefined,
+      status: data.status !== undefined ? data.status : undefined,
+      fullName: data.fullName !== undefined ? data.fullName : undefined,
+      email: data.email !== undefined ? data.email : undefined,
+      phone: data.phone !== undefined ? data.phone : undefined,
+      address: data.address !== undefined ? data.address : undefined,
+      landmark: data.landmark !== undefined ? data.landmark : undefined,
+      pincode: data.pincode !== undefined ? data.pincode : undefined,
+      state: data.state !== undefined ? data.state : undefined,
+      city: data.city !== undefined ? data.city : undefined,
+      deliveredAt: data.status === "DELIVERED" && order.status !== "DELIVERED" ? new Date() : undefined,
+    }
+  });
+
+  return {
+    success: true,
+    message: "Order updated successfully",
+    data: updatedOrder
+  };
+};
+
+export const deleteAdminOrderService = async (orderId: number) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId }
+  });
+
+  if (!order) {
+    throw new ErrorHandler("Order not found", 404);
+  }
+
+  await prisma.order.delete({
+    where: { id: orderId }
+  });
+
+  return {
+    success: true,
+    message: "Order deleted successfully"
+  };
+};
+
+

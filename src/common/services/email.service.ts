@@ -97,7 +97,7 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
             <div style="font-size:13px;color:#888;">${item.color || "N/A"} | ${item.size || "N/A"}</div>
           </td>
           <td align="center" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;">${qty}</td>
-          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-weight:600;">$${totalItemPrice.toFixed(2)}</td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-weight:600;">₹${totalItemPrice.toFixed(2)}</td>
         </tr>
       `;
     }
@@ -153,12 +153,12 @@ export const sendOrderConfirmationEmail = async (email: string, order: any) => {
                   </td></tr>
                   <tr><td style="padding:0 30px 30px;">
                     <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:18px;border-radius:6px;">
-                      <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">$${subtotal.toFixed(2)}</td></tr>
-                      <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">${shipping > 0 ? `$${shipping.toFixed(2)}` : "Free"}</td></tr>
-                      ${cod > 0 ? `<tr><td style="color:#aaa;">COD Charges</td><td align="right" style="color:#fff;">$${cod.toFixed(2)}</td></tr>` : ""}
+                      <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">₹${subtotal.toFixed(2)}</td></tr>
+                      <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">${shipping > 0 ? `₹${shipping.toFixed(2)}` : "Free"}</td></tr>
+                      ${cod > 0 ? `<tr><td style="color:#aaa;">COD Charges</td><td align="right" style="color:#fff;">₹${cod.toFixed(2)}</td></tr>` : ""}
                       <tr style="border-top:1px solid #333;">
                         <td style="padding-top:12px;font-size:17px;font-weight:700;">Total</td>
-                        <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">$${Number(totalAmount).toFixed(2)}</td>
+                        <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">₹${Number(totalAmount).toFixed(2)}</td>
                       </tr>
                     </table>
                   </td></tr>
@@ -275,8 +275,8 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
             <div style="font-size:13px;color:#888;">${item.color || "N/A"} | ${item.size || "N/A"}</div>
           </td>
           <td align="center" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;">${qty}</td>
-          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;">$${price.toFixed(2)}</td>
-          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-weight:600;">$${totalItemPrice.toFixed(2)}</td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;">₹${price.toFixed(2)}</td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #222;color:#fff;font-weight:600;">₹${totalItemPrice.toFixed(2)}</td>
         </tr>
       `;
     }
@@ -335,12 +335,12 @@ export const sendOrderInvoiceEmail = async (email: string, order: any) => {
                 </td></tr>
                 <tr><td style="padding:0 30px 30px;">
                   <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;padding:18px;border-radius:6px;">
-                    <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">$${subtotal.toFixed(2)}</td></tr>
-                    <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">${shipping > 0 ? `$${shipping.toFixed(2)}` : "$0.00"}</td></tr>
-                    ${cod > 0 ? `<tr><td style="color:#aaa;">COD Charges</td><td align="right" style="color:#fff;">$${cod.toFixed(2)}</td></tr>` : ""}
+                    <tr><td style="color:#aaa;">Subtotal</td><td align="right" style="color:#fff;">₹${subtotal.toFixed(2)}</td></tr>
+                    <tr><td style="color:#aaa;">Shipping</td><td align="right" style="color:#fff;">${shipping > 0 ? `₹${shipping.toFixed(2)}` : "₹0.00"}</td></tr>
+                    ${cod > 0 ? `<tr><td style="color:#aaa;">COD Charges</td><td align="right" style="color:#fff;">₹${cod.toFixed(2)}</td></tr>` : ""}
                     <tr style="border-top:1px solid #333;">
                       <td style="padding-top:12px;font-size:17px;font-weight:700;">Total Paid</td>
-                      <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">$${Number(totalAmount).toFixed(2)}</td>
+                      <td align="right" style="padding-top:12px;font-size:19px;font-weight:700;color:#fff;">₹${Number(totalAmount).toFixed(2)}</td>
                     </tr>
                   </table>
                 </td></tr>
@@ -406,69 +406,78 @@ export const sendNewOrderAlertEmail = async (order: any) => {
 
     const recipients = ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"];
 
-    const { data, error } = await resend.emails.send({
-      from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
-      to: ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"],
-      subject: `New Booking Created #${orderId} - MDFK Clothing`,
-      html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head><meta charset="UTF-8"><title>New Order Alert</title></head>
-        <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
-            <tr><td align="center">
-              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;">
-                <tr><td style="background:#0a0a0a;padding:20px 25px;">
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
-                      <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">NEW ORDER ALERT</td>
-                    </tr>
-                  </table>
-                </td></tr>
-                <tr><td style="padding:30px 25px;">
-                  <p style="font-size:15px;color:#555;">Hello Admin, a new order has been placed.</p>
-                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:20px;margin:20px 0;">
-                    <tr>
-                      <td style="line-height:1.8;">
-                        <strong>Order ID:</strong> #${orderId}<br>
-                        <strong>Date:</strong> ${orderDate}<br>
-                        <strong>Payment:</strong> ${paymentMethod}
-                      </td>
-                      <td style="line-height:1.8;padding-left:30px;">
-                        <strong>Customer:</strong> ${fullName}<br>
-                        <strong>Email:</strong> ${emailAddr}<br>
-                        <strong>Phone:</strong> ${phone}
-                      </td>
-                    </tr>
-                    <tr><td colspan="2" style="padding-top:15px;border-top:1px solid #eee;margin-top:15px;">
-                      <strong>Address:</strong><br>${addressDetails}
+    for (const recipient of recipients) {
+      try {
+        const { data, error } = await resend.emails.send({
+          from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
+          to: recipient,
+          subject: `New Booking Created #${orderId} - MDFK Clothing`,
+          html: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head><meta charset="UTF-8"><title>New Order Alert</title></head>
+            <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+                <tr><td align="center">
+                  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;">
+                    <tr><td style="background:#0a0a0a;padding:20px 25px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
+                          <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">NEW ORDER ALERT</td>
+                        </tr>
+                      </table>
                     </td></tr>
-                  </table>
-                  <h3 style="margin:20px 0 10px 0;">Items</h3>
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-                    <thead><tr style="border-bottom:1px solid #ddd;">
-                      <th align="left" style="padding-bottom:8px;color:#666;">Item</th>
-                      <th align="center" style="padding-bottom:8px;color:#666;">Qty</th>
-                      <th align="right" style="padding-bottom:8px;color:#666;">Price</th>
-                    </tr></thead>
-                    <tbody>${itemsHtml}</tbody>
-                  </table>
-                  <table width="100%" style="background:#f0f0f0;padding:15px;border-radius:4px;">
-                    <tr><td style="font-weight:bold;">Total Amount</td><td align="right" style="font-size:18px;font-weight:bold;">$${Number(totalAmount).toFixed(2)}</td></tr>
+                    <tr><td style="padding:30px 25px;">
+                      <p style="font-size:15px;color:#555;">Hello Admin, a new order has been placed.</p>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:20px;margin:20px 0;">
+                        <tr>
+                          <td style="line-height:1.8;">
+                            <strong>Order ID:</strong> #${orderId}<br>
+                            <strong>Date:</strong> ${orderDate}<br>
+                            <strong>Payment:</strong> ${paymentMethod}
+                          </td>
+                          <td style="line-height:1.8;padding-left:30px;">
+                            <strong>Customer:</strong> ${fullName}<br>
+                            <strong>Email:</strong> ${emailAddr}<br>
+                            <strong>Phone:</strong> ${phone}
+                          </td>
+                        </tr>
+                        <tr><td colspan="2" style="padding-top:15px;border-top:1px solid #eee;margin-top:15px;">
+                          <strong>Address:</strong><br>${addressDetails}
+                        </td></tr>
+                      </table>
+                      <h3 style="margin:20px 0 10px 0;">Items</h3>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                        <thead><tr style="border-bottom:1px solid #ddd;">
+                          <th align="left" style="padding-bottom:8px;color:#666;">Item</th>
+                          <th align="center" style="padding-bottom:8px;color:#666;">Qty</th>
+                          <th align="right" style="padding-bottom:8px;color:#666;">Price</th>
+                        </tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                      </table>
+                      <table width="100%" style="background:#f0f0f0;padding:15px;border-radius:4px;">
+                        <tr><td style="font-weight:bold;">Total Amount</td><td align="right" style="font-size:18px;font-weight:bold;">₹${Number(totalAmount).toFixed(2)}</td></tr>
+                      </table>
+                    </td></tr>
+                    <tr><td align="center" style="background:#0a0a0a;padding:20px;color:#888;font-size:11px;">© 2026 MDFK CLOTHING CO. Admin Alerts</td></tr>
                   </table>
                 </td></tr>
-                <tr><td align="center" style="background:#0a0a0a;padding:20px;color:#888;font-size:11px;">© 2026 MDFK CLOTHING CO. Admin Alerts</td></tr>
               </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
-      `,
-    });
+            </body>
+            </html>
+          `,
+        });
 
-    if (error) console.error("Error:", error);
-    else console.log("New order alert sent. ID:", data?.id);
+        if (error) {
+          console.error(`[Resend Error] Failed to send new order alert to ${recipient}:`, JSON.stringify(error));
+        } else {
+          console.log(`[Resend Success] New order alert successfully sent to ${recipient}. ID: ${data?.id}`);
+        }
+      } catch (err: any) {
+        console.error(`[Resend Exception] Error sending new order alert to ${recipient}:`, err.message || err);
+      }
+    }
 
   } catch (error) {
     console.error("Failed to send new order alert email:", error);
@@ -572,66 +581,76 @@ export const sendOrderReturnAlertEmail = async (order: any, returnAddress: strin
 
     const logoSrc = "https://mdfkclothing.com/logo.png";
 
-    const { data, error } = await resend.emails.send({
-      from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
-      to: ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"],
-      subject: `Size Exchange Requested #${orderId} - MDFK Clothing`,
-      html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head><meta charset="UTF-8"><title>Size Exchange Alert</title></head>
-        <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
-            <tr><td align="center">
-              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;">
-                <tr><td style="background:#7f1d1d;padding:20px 25px;">
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
-                      <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">SIZE EXCHANGE REQUESTED</td>
-                    </tr>
-                  </table>
-                </td></tr>
-                <tr><td style="padding:30px 25px;">
-                  <p style="font-size:15px;color:#555;">Hello Admin, a size exchange request has been filed for Order #${orderId}.</p>
-                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:20px;margin:20px 0;">
-                    <tr>
-                      <td style="line-height:1.8;vertical-align:top;">
-                        <strong>Order ID:</strong> #${orderId}<br>
-                        <strong>Order Date:</strong> ${orderDate}<br>
-                        <strong>Pickup & Size Details:</strong><br>${returnAddress}
-                      </td>
-                      <td style="line-height:1.8;padding-left:30px;vertical-align:top;">
-                        <strong>Customer:</strong> ${fullName}<br>
-                        <strong>Email:</strong> ${emailAddr}<br>
-                        <strong>Phone:</strong> ${phone}
-                      </td>
-                    </tr>
-                  </table>
-                  <h3 style="margin:20px 0 10px 0;">Ordered Items</h3>
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-                    <thead><tr style="border-bottom:1px solid #ddd;">
-                      <th align="left" style="padding-bottom:8px;color:#666;">Item</th>
-                      <th align="center" style="padding-bottom:8px;color:#666;">Qty</th>
-                      <th align="right" style="padding-bottom:8px;color:#666;">Price</th>
-                    </tr></thead>
-                    <tbody>${itemsHtml}</tbody>
-                  </table>
-                  <table width="100%" style="background:#f0f0f0;padding:15px;border-radius:4px;">
-                    <tr><td style="font-weight:bold;">Original Order Value</td><td align="right" style="font-size:18px;font-weight:bold;">₹${Number(order.totalAmount).toFixed(2)}</td></tr>
-                  </table>
-                </td></tr>
-                <tr><td align="center" style="background:#0a0a0a;padding:20px;color:#888;font-size:11px;">© 2026 MDFK CLOTHING CO. Admin Alerts</td></tr>
-              </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
-      `
-    });
+    const recipients = ["clothing.mdfk@gmail.com", "siradhanachetan14@gmail.com"];
 
-    if (error) {
-      console.error("Resend API returned error when sending return email:", error);
+    for (const recipient of recipients) {
+      try {
+        const { data, error } = await resend.emails.send({
+          from: "MDFK Clothing Alerts <hello@mdfkclothing.com>",
+          to: recipient,
+          subject: `Size Exchange Requested #${orderId} - MDFK Clothing`,
+          html: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head><meta charset="UTF-8"><title>Size Exchange Alert</title></head>
+            <body style="margin:0;padding:0;background:#f4f4f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#333;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+                <tr><td align="center">
+                  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #ddd;border-radius:6px;overflow:hidden;">
+                    <tr><td style="background:#7f1d1d;padding:20px 25px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td><img src="${logoSrc}" width="60" alt="MDFK Logo"/></td>
+                          <td align="right" style="color:#fff;font-weight:bold;letter-spacing:1px;">SIZE EXCHANGE REQUESTED</td>
+                        </tr>
+                      </table>
+                    </td></tr>
+                    <tr><td style="padding:30px 25px;">
+                      <p style="font-size:15px;color:#555;">Hello Admin, a size exchange request has been filed for Order #${orderId}.</p>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:20px;margin:20px 0;">
+                        <tr>
+                          <td style="line-height:1.8;vertical-align:top;">
+                            <strong>Order ID:</strong> #${orderId}<br>
+                            <strong>Order Date:</strong> ${orderDate}<br>
+                            <strong>Pickup & Size Details:</strong><br>${returnAddress}
+                          </td>
+                          <td style="line-height:1.8;padding-left:30px;vertical-align:top;">
+                            <strong>Customer:</strong> ${fullName}<br>
+                            <strong>Email:</strong> ${emailAddr}<br>
+                            <strong>Phone:</strong> ${phone}
+                          </td>
+                        </tr>
+                      </table>
+                      <h3 style="margin:20px 0 10px 0;">Ordered Items</h3>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                        <thead><tr style="border-bottom:1px solid #ddd;">
+                          <th align="left" style="padding-bottom:8px;color:#666;">Item</th>
+                          <th align="center" style="padding-bottom:8px;color:#666;">Qty</th>
+                          <th align="right" style="padding-bottom:8px;color:#666;">Price</th>
+                        </tr></thead>
+                        <tbody>${itemsHtml}</tbody>
+                      </table>
+                      <table width="100%" style="background:#f0f0f0;padding:15px;border-radius:4px;">
+                        <tr><td style="font-weight:bold;">Original Order Value</td><td align="right" style="font-size:18px;font-weight:bold;">₹${Number(order.totalAmount).toFixed(2)}</td></tr>
+                      </table>
+                    </td></tr>
+                    <tr><td align="center" style="background:#0a0a0a;padding:20px;color:#888;font-size:11px;">© 2026 MDFK CLOTHING CO. Admin Alerts</td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </body>
+            </html>
+          `
+        });
+
+        if (error) {
+          console.error(`[Resend Error] Failed to send return alert to ${recipient}:`, JSON.stringify(error));
+        } else {
+          console.log(`[Resend Success] Return alert successfully sent to ${recipient}. ID: ${data?.id}`);
+        }
+      } catch (err: any) {
+        console.error(`[Resend Exception] Error sending return alert to ${recipient}:`, err.message || err);
+      }
     }
   } catch (error) {
     console.error("Failed to send return request email:", error);

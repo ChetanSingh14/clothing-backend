@@ -203,9 +203,14 @@ export const getAdminStatsService = async () => {
   const revenueQuery = await prisma.order.aggregate({
     _sum: {
       totalAmount: true,
+      shippingCharges: true,
+      codCharges: true,
     },
   });
-  const totalRevenue = revenueQuery._sum.totalAmount ? Number(revenueQuery._sum.totalAmount.toFixed(2)) : 0;
+  const totalAmountSum = revenueQuery._sum.totalAmount || 0;
+  const shippingChargesSum = revenueQuery._sum.shippingCharges || 0;
+  const codChargesSum = revenueQuery._sum.codCharges || 0;
+  const totalRevenue = Number((totalAmountSum - shippingChargesSum - codChargesSum).toFixed(2));
 
   return {
     success: true,

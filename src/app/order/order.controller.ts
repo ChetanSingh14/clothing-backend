@@ -12,7 +12,9 @@ import {
   nimbusShipExchangeOrderService,
   nimbusCancelExchangeOrderService,
   nimbusTrackExchangeOrderService,
-  adminCreateOrderService
+  adminCreateOrderService,
+  updateAdminOrderService,
+  deleteAdminOrderService
 } from "./order.service";
 import ErrorHandler, { catchAsyncError } from "../../common/utils/errorHandler";
 import { logger } from "../../common/utils/logger.utils";
@@ -240,5 +242,25 @@ export const adminCreateOrder = catchAsyncError(
 
     const result = await adminCreateOrderService(adminUserId, req.body);
     res.status(201).json(result);
+  }
+);
+
+export const updateAdminOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const orderId = Number(req.params.id);
+    if (isNaN(orderId)) throw new ErrorHandler("Invalid order ID", 400);
+
+    const result = await updateAdminOrderService(orderId, req.body);
+    res.status(200).json(result);
+  }
+);
+
+export const deleteAdminOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const orderId = Number(req.params.id);
+    if (isNaN(orderId)) throw new ErrorHandler("Invalid order ID", 400);
+
+    const result = await deleteAdminOrderService(orderId);
+    res.status(200).json(result);
   }
 );

@@ -15,7 +15,9 @@ import {
   nimbusShipExchangeOrder,
   nimbusCancelExchangeOrder,
   nimbusTrackExchangeOrder,
-  adminCreateOrder
+  adminCreateOrder,
+  updateAdminOrder,
+  deleteAdminOrder
 } from "./order.controller";
 import { authenticateToken, authorizeAdmin } from "../../common/middlewares/auth.middleware";
 
@@ -31,6 +33,8 @@ router.post("/admin/create", authenticateToken(), authorizeAdmin, adminCreateOrd
 router.put("/admin/:id/status", authenticateToken(), authorizeAdmin, updateAdminOrderStatus);
 router.post("/admin/:id/nimbus-ship", authenticateToken(), authorizeAdmin, nimbusShipOrder);
 router.post("/admin/:id/nimbus-cancel", authenticateToken(), authorizeAdmin, nimbusCancelOrder);
+router.put("/admin/:id", authenticateToken(), authorizeAdmin, updateAdminOrder);
+router.delete("/admin/:id", authenticateToken(), authorizeAdmin, deleteAdminOrder);
 
 // Exchange Order Admin routes
 router.get("/admin/exchanges", authenticateToken(), authorizeAdmin, getAdminExchangeOrders);
