@@ -85,3 +85,21 @@ export const updateCustomOrderStatus = catchAsyncError(
     });
   }
 );
+
+export const updateAdminCustomOrder = catchAsyncError(
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    const orderId = Number(req.params.id);
+
+    if (isNaN(orderId)) {
+      throw new ErrorHandler("Invalid order ID", 400);
+    }
+
+    const order = await customOrderService.updateAdminCustomOrder(orderId, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: "Custom order updated successfully",
+      data: order,
+    });
+  }
+);

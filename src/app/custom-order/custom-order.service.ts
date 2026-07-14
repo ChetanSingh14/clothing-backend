@@ -40,7 +40,12 @@ export const createCustomOrder = async (data: any) => {
       designNotes: data.designNotes,
       color: data.color,
       size: data.size,
-      quantity: data.quantity,
+      quantity: data.quantity !== undefined ? Number(data.quantity) : undefined,
+      price: data.price !== undefined ? Number(data.price) : undefined,
+      totalAmount: data.totalAmount !== undefined ? Number(data.totalAmount) : undefined,
+      shippingCharges: data.shippingCharges !== undefined ? Number(data.shippingCharges) : undefined,
+      codCharges: data.codCharges !== undefined ? Number(data.codCharges) : undefined,
+      paymentMethod: data.paymentMethod || undefined,
       fullName: data.fullName,
       email: data.email,
       phone: data.phone,
@@ -88,6 +93,42 @@ export const updateCustomOrderStatus = async (orderId: number, status: string) =
   const updatedOrder = await prisma.customOrder.update({
     where: { id: orderId },
     data: { status },
+  });
+
+  return updatedOrder;
+};
+
+export const updateAdminCustomOrder = async (orderId: number, data: any) => {
+  const existingOrder = await prisma.customOrder.findUnique({
+    where: { id: orderId },
+  });
+
+  if (!existingOrder) {
+    throw new ErrorHandler("Custom order not found", 404);
+  }
+
+  const updatedOrder = await prisma.customOrder.update({
+    where: { id: orderId },
+    data: {
+      price: data.price !== undefined ? Number(data.price) : undefined,
+      quantity: data.quantity !== undefined ? Number(data.quantity) : undefined,
+      totalAmount: data.totalAmount !== undefined ? Number(data.totalAmount) : undefined,
+      shippingCharges: data.shippingCharges !== undefined ? Number(data.shippingCharges) : undefined,
+      codCharges: data.codCharges !== undefined ? Number(data.codCharges) : undefined,
+      paymentMethod: data.paymentMethod !== undefined ? data.paymentMethod : undefined,
+      status: data.status !== undefined ? data.status : undefined,
+      fullName: data.fullName !== undefined ? data.fullName : undefined,
+      email: data.email !== undefined ? data.email : undefined,
+      phone: data.phone !== undefined ? data.phone : undefined,
+      address: data.address !== undefined ? data.address : undefined,
+      landmark: data.landmark !== undefined ? data.landmark : undefined,
+      pincode: data.pincode !== undefined ? data.pincode : undefined,
+      state: data.state !== undefined ? data.state : undefined,
+      city: data.city !== undefined ? data.city : undefined,
+      designNotes: data.designNotes !== undefined ? data.designNotes : undefined,
+      color: data.color !== undefined ? data.color : undefined,
+      size: data.size !== undefined ? data.size : undefined,
+    },
   });
 
   return updatedOrder;
